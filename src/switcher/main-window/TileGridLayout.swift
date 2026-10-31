@@ -15,13 +15,19 @@ enum TileGridLayout {
         var widthMax: CGFloat
         var padding: CGFloat
         var isLeftToRight: Bool
+        /// Tile positions that open a matching-group section: each starts a new row under a header.
+        var sectionStarts: [Int]
+        var headerHeight: CGFloat
 
-        init(widths: [CGFloat], tileHeight: CGFloat, widthMax: CGFloat, padding: CGFloat, isLeftToRight: Bool = true) {
+        init(widths: [CGFloat], tileHeight: CGFloat, widthMax: CGFloat, padding: CGFloat, isLeftToRight: Bool = true,
+             sectionStarts: [Int] = [], headerHeight: CGFloat = 0) {
             self.widths = widths
             self.tileHeight = tileHeight
             self.widthMax = widthMax
             self.padding = padding
             self.isLeftToRight = isLeftToRight
+            self.sectionStarts = sectionStarts
+            self.headerHeight = headerHeight
         }
     }
 
@@ -34,6 +40,9 @@ enum TileGridLayout {
         /// last row. Both include the padding that follows the tile.
         var maxX: CGFloat
         var maxY: CGFloat
+        /// One per `Input.sectionStarts` entry, same order: the header's top edge, and the row's leading
+        /// edge in x — the left edge in LTR, the right edge in RTL.
+        var headerOrigins: [CGPoint] = []
     }
 
     static func compute(_ input: Input) -> Result {
@@ -44,8 +53,19 @@ enum TileGridLayout {
         var maxY = currentY + input.tileHeight + input.padding
         var origins = [CGPoint]()
         var rows = [[Int]]()
+        var headerOrigins = [CGPoint]()
+        let sectionStarts = Set(input.sectionStarts)
         rows.append([Int]())
         for (index, width) in input.widths.enumerated() {
+            if sectionStarts.contains(index) {
+                if index > 0 {
+                    currentX = startingX
+                    currentY = (currentY + input.tileHeight + input.padding).rounded(.down)
+                    rows.append([Int]())
+                }
+                headerOrigins.append(CGPoint(x: startingX, y: currentY))
+                currentY += input.headerHeight
+            }
             let nextX = projectedX(currentX, width, input).rounded(.down)
             if needsNewRow(nextX, input) {
                 currentX = startingX
@@ -65,8 +85,9 @@ enum TileGridLayout {
                 maxX = max(input.isLeftToRight ? currentX : input.widthMax - currentX, maxX)
             }
             rows[rows.count - 1].append(index)
+            maxY = max(currentY + input.tileHeight + input.padding, maxY)
         }
-        return Result(origins: origins, rows: rows, maxX: maxX, maxY: maxY)
+        return Result(origins: origins, rows: rows, maxX: maxX, maxY: maxY, headerOrigins: headerOrigins)
     }
 
     /// How far each row has to move along the writing direction to sit centered in `within`. Zero for a row

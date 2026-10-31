@@ -78,3 +78,12 @@ Mirrors `WindowOrderResolverTests.swift` 1:1.
 
 ### G. Tiebreak / symmetry
 - **testEqualWindowsAreNotOrderedBeforeEachOther** — equal facts are not ordered before each other.
+
+### H. Matching groups
+`OrderWindow.matchingGroupRank` (0 everywhere when matching groups are off) is the primary key without
+search, ahead of the show-at-the-end buckets, so the buckets apply within each section. With search: matches,
+then the pinned best match, then rank, then relevance.
+- **testMatchingGroupRankIsThePrimaryKeyWithoutSearch** — a lower rank wins over a more recent focus.
+- **testAtTheEndBucketsApplyWithinAMatchingGroup** — a minimized window stays in its own section, at its end.
+- **testRankZeroEverywhereReproducesTodaysOrder** — with every rank at 0 the comparator answers as before.
+- **testSearchOrdersByMatchThenPinThenRankThenRelevance** — each key in turn decides.

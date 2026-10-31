@@ -1,6 +1,14 @@
 import Cocoa
 
 class AboutTab {
+    /// When this binary was built, read from its own file date, so a local build can be told apart from the
+    /// last one even when nothing was committed in between.
+    private static func builtAt() -> String {
+        guard let date = (try? Bundle.main.executableURL?.resourceValues(forKeys: [.contentModificationDateKey]))?
+            .flatMap({ $0.contentModificationDate }) else { return "" }
+        return " · Built " + DateFormatter.localizedString(from: date, dateStyle: .medium, timeStyle: .short)
+    }
+
     static func makeContentView(_ fitToContent: Bool = true, _ showFeedbackButton: Bool = true, _ centerHero: Bool = false) -> NSView {
         let appIcon = LightImageView()
         appIcon.translatesAutoresizingMaskIntoConstraints = false
@@ -9,7 +17,7 @@ class AboutTab {
         appIcon.fit(128, 128)
         let appText = StackView([
             BoldLabel(App.name),
-            NSTextField(labelWithString: NSLocalizedString("Version", comment: "") + " " + App.version),
+            NSTextField(labelWithString: NSLocalizedString("Version", comment: "") + " " + App.version + builtAt()),
             NSTextField(labelWithString: App.licence),
             HyperlinkLabel(NSLocalizedString("Website", comment: ""), Endpoints.website),
             HyperlinkLabel(NSLocalizedString("Source code", comment: ""), App.repository),

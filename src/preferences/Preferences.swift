@@ -36,6 +36,8 @@ class Preferences {
             "menubarIconShown": "true",
             "language": LanguagePreference.systemDefault.indexAsString,
             "exceptions": defaultExceptions(),
+            "matchingGroups": "[]",
+            "matchingGroupsPinTopResult": "true",
             "updatePolicy": UpdatePolicyPreference.autoCheck.indexAsString,
             "crashPolicy": CrashPolicyPreference.ask.indexAsString,
             "hideThumbnails": "false",
@@ -63,6 +65,7 @@ class Preferences {
             values[indexToName("shortcutStyle", index)] = ShortcutStylePreference.focusOnRelease.indexAsString
             values[indexToName("showAppsOrWindows", index)] = GroupAppsPreference.allWindows.indexAsString
             values[indexToName("showTabsAsWindows", index)] = GroupTabsPreference.singleWindow.indexAsString
+            values[indexToName("matchingGroupsEnabled", index)] = MatchingGroupsPreference.off.indexAsString
             // Override defaults are the FREE-tier value for Pro-gated prefs (so `snapshotAndDowngrade`
             // is a no-op for unset overrides), and the global default for non-gated prefs.
             // `hasOverride(_:_:)` consults `persistentDomain` so registered defaults don't make
@@ -115,6 +118,10 @@ class Preferences {
     static var hideStatusIcons: Bool { CachedUserDefaults.bool("hideStatusIcons") }
     static var startAtLogin: Bool { CachedUserDefaults.bool("startAtLogin") }
     static var exceptions: [ExceptionEntry] { CachedUserDefaults.json("exceptions", [ExceptionEntry].self) }
+    static var matchingGroupsPinTopResult: Bool { CachedUserDefaults.bool("matchingGroupsPinTopResult") }
+    static var matchingGroups: [MatchingGroupRule] {
+        CachedUserDefaults.json("matchingGroups", [LenientDecodable<MatchingGroupRule>].self).compactMap { $0.value }
+    }
     static var previewSelectedWindow: Bool { CachedUserDefaults.bool("previewFocusedWindow") }
     static var captureWindowsInBackground: Bool { CachedUserDefaults.bool("captureWindowsInBackground") }
     static var screenRecordingPermissionSkipped: Bool { CachedUserDefaults.bool("screenRecordingPermissionSkipped") }
@@ -144,6 +151,7 @@ class Preferences {
     static func windowOrder(_ i: Int) -> WindowOrderPreference { CachedUserDefaults.macroPref(indexToName("windowOrder", i), WindowOrderPreference.allCases) }
     static func groupApps(_ i: Int) -> GroupAppsPreference { CachedUserDefaults.macroPref(indexToName("showAppsOrWindows", i), GroupAppsPreference.allCases) }
     static func groupTabs(_ i: Int) -> GroupTabsPreference { CachedUserDefaults.macroPref(indexToName("showTabsAsWindows", i), GroupTabsPreference.allCases) }
+    static func matchingGroupsEnabled(_ i: Int) -> MatchingGroupsPreference { CachedUserDefaults.macroPref(indexToName("matchingGroupsEnabled", i), MatchingGroupsPreference.allCases) }
     static var shortcutStyle: ShortcutStylePreference { ProGatedPreferences.shortcutStyle.read() }
     static var menubarIcon: MenubarIconPreference { CachedUserDefaults.macroPref("menubarIcon", MenubarIconPreference.allCases) }
     static var menubarIconShown: Bool { CachedUserDefaults.bool("menubarIconShown") }
@@ -214,8 +222,11 @@ class Preferences {
         CachedUserDefaults.shortcut(key)
     }
 
+    /// Values `UserDefaults` can't store as-is (arrays of Swift structs) and that are read back with `CachedUserDefaults.json`.
+    private static let jsonEncodedKeys: Set<String> = ["exceptions", "matchingGroups"]
+
     static func set<T>(_ key: String, _ value: T, _ notify: Bool = true) where T: Encodable {
-        write(key, notify) { UserDefaults.standard.set(key == "exceptions" ? jsonEncode(value) : value, forKey: key) }
+        write(key, notify) { UserDefaults.standard.set(jsonEncodedKeys.contains(key) ? jsonEncode(value) : value, forKey: key) }
     }
 
     static func remove(_ key: String, _ notify: Bool = true) {

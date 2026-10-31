@@ -69,6 +69,10 @@ class Window {
     var semanticSurface: SemanticSurface?
     var application: Application
     var rowIndex: Int?
+    var matchingGroupRank = 0
+    var isPinnedBestMatch = false
+    /// Position in the list as it would be sorted without matching groups; nil while they're off.
+    var ungroupedPosition: Int?
     var debugId: String!
     var lastSearchQuery: String?
     /// AX answered this window's last title read, or its discovery, with an empty title

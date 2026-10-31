@@ -2,7 +2,7 @@ import Foundation
 
 /// Decides the display order of windows in the switcher. When a search query is active, ranks by
 /// match-then-relevance; otherwise applies the user's chosen order (recently-focused / recently-created
-/// / alphabetical / by-space), after pushing any "show at the end" buckets (windowless / hidden /
+/// / alphabetical / by-space), within each matching-group section, after pushing any "show at the end" buckets (windowless / hidden /
 /// minimized) to the back, with a stable `lastFocusOrder` tiebreak. Pure kernel.
 ///
 /// `OrderWindow` bundles the canonical `WindowState` + `ApplicationState` for a window with its
@@ -18,6 +18,10 @@ struct OrderWindow: Equatable {
     let app: ApplicationState
     let searchMatches: Bool       // Search.matches (only meaningful when search is active)
     let searchRelevance: Double   // Search.relevance
+    /// `MatchingGroupResolver.rank`; 0 for every window when matching groups are off.
+    var matchingGroupRank = 0
+    /// During a search with matching groups on: the one best match, drawn first outside any section.
+    var isPinnedBestMatch = false
 }
 
 struct ApplicationRepresentativeCandidate: Equatable {
@@ -59,9 +63,13 @@ enum WindowOrderResolver {
                                 sortType: OrderSortType = .recentlyFocused) -> Bool {
         if searchActive {
             if a.searchMatches != b.searchMatches { return a.searchMatches }
+            if a.isPinnedBestMatch != b.isPinnedBestMatch { return a.isPinnedBestMatch }
+            if a.matchingGroupRank != b.matchingGroupRank { return a.matchingGroupRank < b.matchingGroupRank }
             if a.searchRelevance != b.searchRelevance { return a.searchRelevance > b.searchRelevance }
             return a.state.lastFocusOrder < b.state.lastFocusOrder
         }
+        // sections first, so the buckets below push windows to the end of their own section
+        if a.matchingGroupRank != b.matchingGroupRank { return a.matchingGroupRank < b.matchingGroupRank }
         // separate buckets for these window types (pushed to the end)
         if windowlessAtEnd && a.state.isWindowlessApp != b.state.isWindowlessApp { return b.state.isWindowlessApp }
         if hiddenAtEnd && a.app.isHidden != b.app.isHidden { return b.app.isHidden }

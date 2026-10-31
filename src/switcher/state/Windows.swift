@@ -326,7 +326,8 @@ class Windows {
                             lastFocusOrder: $0.lastFocusOrder,
                             isMinimized: $0.isMinimized,
                             isWindowlessApp: $0.isWindowlessApp,
-                            appearedAfterSummon: !(presentAtSummon?.contains($0.id) ?? true))
+                            appearedAfterSummon: !(presentAtSummon?.contains($0.id) ?? true),
+                            ungroupedPosition: $0.ungroupedPosition)
         }
     }
 
@@ -422,8 +423,7 @@ class Windows {
         // partially-clipped edge tile yanks the whole list — the accidental "edge scroll". Mouse users scroll
         // with the wheel/trackpad instead.
         if !fromMouse {
-            let focusedView = TilesView.recycledViews[index]
-            TilesView.scrollView.contentView.scrollToVisible(focusedView.frame)
+            TilesView.scrollView.contentView.scrollToVisible(TilesView.scrollTargetFrame(index))
         }
         voiceOverWindow(index)
     }
@@ -547,25 +547,73 @@ class Windows {
         let hiddenAtEnd = Preferences.showHiddenWindows(shortcutIndex) == .showAtTheEnd
         let minimizedAtEnd = Preferences.showMinimizedWindows(shortcutIndex) == .showAtTheEnd
         let sortType = orderSortType(Preferences.windowOrder(shortcutIndex))
+        let groupingActive = matchingGroupsActive(shortcutIndex)
         // Precompute each window's ordering facts once (O(n) Search calls), then sort on the snapshots.
-        let facts = Dictionary(uniqueKeysWithValues: list.map { (ObjectIdentifier($0), orderWindow($0, query, searchActive)) })
-        list.sort {
-            WindowOrderResolver.isOrderedBefore(
-                facts[ObjectIdentifier($0)]!, facts[ObjectIdentifier($1)]!,
+        var facts = Dictionary(uniqueKeysWithValues: list.map { (ObjectIdentifier($0), orderWindow($0, query, searchActive, groupingActive)) })
+        if groupingActive && searchActive && Preferences.matchingGroupsPinTopResult { pinBestMatch(&facts) }
+        let isOrderedBefore = { (a: OrderWindow, b: OrderWindow) in
+            WindowOrderResolver.isOrderedBefore(a, b,
                 searchActive: searchActive,
                 windowlessAtEnd: windowlessAtEnd,
                 hiddenAtEnd: hiddenAtEnd,
                 minimizedAtEnd: minimizedAtEnd,
                 sortType: sortType)
         }
+        list.sort { isOrderedBefore(facts[ObjectIdentifier($0)]!, facts[ObjectIdentifier($1)]!) }
+        applyMatchingGroupFacts(facts)
+        applyUngroupedPositions(groupingActive && !searchActive ? facts : nil, isOrderedBefore)
     }
 
-    private static func orderWindow(_ window: Window, _ query: String, _ searchActive: Bool) -> OrderWindow {
-        OrderWindow(
-            state: window.state,
-            app: window.application.state,
+    /// Matching groups only apply to the Titles style, and only once at least one group is enabled.
+    static func matchingGroupsActive(_ shortcutIndex: Int) -> Bool {
+        Preferences.matchingGroupsEnabled(shortcutIndex) == .byRules
+            && Preferences.effectiveAppearanceStyle(shortcutIndex) == .titles
+            && !MatchingGroups.compiled.isEmpty
+    }
+
+    private static func orderWindow(_ window: Window, _ query: String, _ searchActive: Bool, _ groupingActive: Bool) -> OrderWindow {
+        let state = window.state
+        let app = window.application.state
+        var orderWindow = OrderWindow(
+            state: state,
+            app: app,
             searchMatches: searchActive ? Search.matches(window, query: query) : false,
             searchRelevance: searchActive ? Search.relevance(for: window, query: query) : 0)
+        if groupingActive {
+            orderWindow.matchingGroupRank = MatchingGroupResolver.rank(MatchingGroupFacts.of(state, app), predicates: MatchingGroups.predicates)
+        }
+        return orderWindow
+    }
+
+    private static func pinBestMatch(_ facts: inout [ObjectIdentifier: OrderWindow]) {
+        let candidates = list.filter { $0.shouldShowTheUser && facts[ObjectIdentifier($0)]!.searchMatches }
+        let scores = candidates.map { (relevance: facts[ObjectIdentifier($0)]!.searchRelevance, lastFocusOrder: $0.lastFocusOrder) }
+        guard let best = MatchingGroupResolver.pinnedBestMatch(scores) else { return }
+        facts[ObjectIdentifier(candidates[best])]!.isPinnedBestMatch = true
+    }
+
+    private static func applyMatchingGroupFacts(_ facts: [ObjectIdentifier: OrderWindow]) {
+        for window in list {
+            let f = facts[ObjectIdentifier(window)]!
+            window.matchingGroupRank = f.matchingGroupRank
+            window.isPinnedBestMatch = f.isPinnedBestMatch
+        }
+    }
+
+    /// Where each window would sit with matching groups off. The default selection is judged in that order,
+    /// so a quick press still lands on the previous window when grouping moved it down the list.
+    private static func applyUngroupedPositions(_ facts: [ObjectIdentifier: OrderWindow]?, _ isOrderedBefore: (OrderWindow, OrderWindow) -> Bool) {
+        guard let facts else {
+            list.forEach { $0.ungroupedPosition = nil }
+            return
+        }
+        let ungrouped = facts.mapValues { f -> OrderWindow in
+            var flat = f
+            flat.matchingGroupRank = 0
+            return flat
+        }
+        let order = list.sorted { isOrderedBefore(ungrouped[ObjectIdentifier($0)]!, ungrouped[ObjectIdentifier($1)]!) }
+        for (position, window) in order.enumerated() { window.ungroupedPosition = position }
     }
 
     private static func orderSortType(_ p: WindowOrderPreference) -> OrderSortType {

@@ -646,6 +646,7 @@ extension App: NSApplicationDelegate {
         // `registerDefaults()` (they read raw plist values), which `initialize()` already guarantees.
         // This only touches UserDefaults + TIS (main-thread), so it depends on nothing below.
         Preferences.initialize()
+        MatchingGroups.reload()
         // Handle the "move to /Applications" prompt before anything else sets up the model. It runs a modal
         // alert (and may relaunch + exit), both of which pump the main run loop, so it must come before the
         // WindowServer tap below: otherwise the tap's queued window discovery drains re-entrantly during the

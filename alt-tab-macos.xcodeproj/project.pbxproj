@@ -7,6 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5EA7C4000000000000000002 /* MatchingGroupRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA7C4000000000000000001 /* MatchingGroupRule.swift */; };
+		5EA7C4000000000000000003 /* MatchingGroupRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA7C4000000000000000001 /* MatchingGroupRule.swift */; };
+		5EA7C4000000000000000006 /* MatchingGroupRuleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA7C4000000000000000005 /* MatchingGroupRuleTests.swift */; };
+		5EA7C4000000000000000008 /* MatchingGroupResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA7C4000000000000000007 /* MatchingGroupResolver.swift */; };
+		5EA7C4000000000000000009 /* MatchingGroupResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA7C4000000000000000007 /* MatchingGroupResolver.swift */; };
+		5EA7C4000000000000000012 /* MatchingGroupResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA7C4000000000000000011 /* MatchingGroupResolverTests.swift */; };
+		5EA7C4000000000000000014 /* MatchingGroups.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA7C4000000000000000013 /* MatchingGroups.swift */; };
+		5EA7C4000000000000000016 /* MatchingGroupHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA7C4000000000000000015 /* MatchingGroupHeaderView.swift */; };
+		5EA7C4000000000000000018 /* MatchingGroupsTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA7C4000000000000000017 /* MatchingGroupsTab.swift */; };
 		A02020261020000000000001 /* ProFeatureCopy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FA001000000000000000010 /* ProFeatureCopy.swift */; };
 		A01920261019000000020001 /* ProPromptTestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = A01920261019000000010001 /* ProPromptTestSupport.swift */; };
 		A01920261019000000020000 /* ProPromptFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A01920261019000000010000 /* ProPromptFlowTests.swift */; };
@@ -489,6 +498,15 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		5EA7C4000000000000000001 /* MatchingGroupRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchingGroupRule.swift; sourceTree = "<group>"; };
+		5EA7C4000000000000000004 /* MatchingGroupRuleSpecs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MatchingGroupRuleSpecs.md; sourceTree = "<group>"; };
+		5EA7C4000000000000000005 /* MatchingGroupRuleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchingGroupRuleTests.swift; sourceTree = "<group>"; };
+		5EA7C4000000000000000007 /* MatchingGroupResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchingGroupResolver.swift; sourceTree = "<group>"; };
+		5EA7C4000000000000000010 /* MatchingGroupResolverSpecs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MatchingGroupResolverSpecs.md; sourceTree = "<group>"; };
+		5EA7C4000000000000000011 /* MatchingGroupResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchingGroupResolverTests.swift; sourceTree = "<group>"; };
+		5EA7C4000000000000000013 /* MatchingGroups.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchingGroups.swift; sourceTree = "<group>"; };
+		5EA7C4000000000000000015 /* MatchingGroupHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchingGroupHeaderView.swift; sourceTree = "<group>"; };
+		5EA7C4000000000000000017 /* MatchingGroupsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchingGroupsTab.swift; sourceTree = "<group>"; };
 		A01920261019000000010001 /* ProPromptTestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = src/_test-support/ProPromptTestSupport.swift; sourceTree = SOURCE_ROOT; };
 		A01920261019000000010000 /* ProPromptFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = src/pro/ui/ProPromptFlowTests.swift; sourceTree = SOURCE_ROOT; };
 		F01700000000000000000001 /* IllustrationDrawer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IllustrationDrawer.swift; sourceTree = "<group>"; };
@@ -957,6 +975,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5EA7C4000000000000000019 /* matching-groups */ = {
+			isa = PBXGroup;
+			children = (
+				5EA7C4000000000000000001 /* MatchingGroupRule.swift */,
+				5EA7C4000000000000000004 /* MatchingGroupRuleSpecs.md */,
+				5EA7C4000000000000000005 /* MatchingGroupRuleTests.swift */,
+				5EA7C4000000000000000007 /* MatchingGroupResolver.swift */,
+				5EA7C4000000000000000010 /* MatchingGroupResolverSpecs.md */,
+				5EA7C4000000000000000011 /* MatchingGroupResolverTests.swift */,
+				5EA7C4000000000000000013 /* MatchingGroups.swift */,
+			);
+			path = "matching-groups";
+			sourceTree = "<group>";
+		};
 		1C961B4542D84D5B6E937B15 /* workflows */ = {
 			isa = PBXGroup;
 			children = (
@@ -1369,6 +1401,7 @@
 				5E5EA12E0000000000000101 /* KeyRepeatTimerTests.swift */,
 				6853124817C5591C2802121F /* search-discovery */,
 				D04BA62E30174C336E4080FA /* main-window */,
+				5EA7C4000000000000000019 /* matching-groups */,
 				F00DCAFE0000000000000002 /* Search.swift */,
 				F00DCAFE0000000000000003 /* SearchTestable.swift */,
 				BF0CAAAA0000000000000001 /* SearchTests.swift */,
@@ -1546,6 +1579,7 @@
 		D04BA3FA52AA40B827A72F10 /* tabs */ = {
 			isa = PBXGroup;
 			children = (
+				5EA7C4000000000000000017 /* MatchingGroupsTab.swift */,
 				5F0A63062F82D99200AE4C38 /* UpgradeTab.swift */,
 				5F21C9DE2C6E93F10091F72F /* appearance */,
 				5F21C9DD2C6E93E60091F72F /* controls */,
@@ -1671,6 +1705,7 @@
 		D04BA62E30174C336E4080FA /* main-window */ = {
 			isa = PBXGroup;
 			children = (
+				5EA7C4000000000000000015 /* MatchingGroupHeaderView.swift */,
 				BF0C82817AEE4AF34D03CA9D /* TilesPanelBackgroundView.swift */,
 				D04BA653BD073CB58E2CFC93 /* TilesPanel.swift */,
 				D04BAD1297730B191E96E7FE /* TileTitleView.swift */,
@@ -2129,6 +2164,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5EA7C4000000000000000003 /* MatchingGroupRule.swift in Sources */,
+				5EA7C4000000000000000006 /* MatchingGroupRuleTests.swift in Sources */,
+				5EA7C4000000000000000009 /* MatchingGroupResolver.swift in Sources */,
+				5EA7C4000000000000000012 /* MatchingGroupResolverTests.swift in Sources */,
 				F01700000000000000000012 /* IllustrationDrawer.swift in Sources */,
 				F01500000000000000000012 /* LocalizedIllustration.swift in Sources */,
 				F01500000000000000000013 /* LocalizedIllustrationTests.swift in Sources */,
@@ -2305,6 +2344,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5EA7C4000000000000000002 /* MatchingGroupRule.swift in Sources */,
+				5EA7C4000000000000000008 /* MatchingGroupResolver.swift in Sources */,
+				5EA7C4000000000000000014 /* MatchingGroups.swift in Sources */,
+				5EA7C4000000000000000016 /* MatchingGroupHeaderView.swift in Sources */,
+				5EA7C4000000000000000018 /* MatchingGroupsTab.swift in Sources */,
 				F01700000000000000000011 /* IllustrationDrawer.swift in Sources */,
 				F01500000000000000000011 /* LocalizedIllustration.swift in Sources */,
 				C966F89BC7C0D1E5F7C9B26E /* SearchDiscoveryShortcut.swift in Sources */,
