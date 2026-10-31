@@ -19,7 +19,9 @@ class PreferencesMigrations {
         let existingVersion = Self.defaults.string(forKey: preferencesKey)
         ProTransitionState.markFreshInstallIfUnknown(existingVersion == nil)
         if let versionInPlist = existingVersion {
-            if versionInPlist != "#VERSION#" && versionInPlist.compare(App.version, options: .numeric) != .orderedDescending {
+            // Strictly older only: relaunching the same version must not re-run migrations. Local builds are
+            // always version "1", below every threshold, so they would re-run all migrations on each launch.
+            if versionInPlist != "#VERSION#" && versionInPlist.compare(App.version, options: .numeric) == .orderedAscending {
                 updateToNewPreferences(versionInPlist)
             }
         }

@@ -2,11 +2,12 @@ import Cocoa
 
 class AboutTab {
     /// When this binary was built, read from its own file date, so a local build can be told apart from the
-    /// last one even when nothing was committed in between.
-    private static func builtAt() -> String {
+    /// last one even when nothing was committed in between. Shown in the Usage section: next to the app icon,
+    /// it outgrows the About window's width.
+    static func builtAt() -> String {
         guard let date = (try? Bundle.main.executableURL?.resourceValues(forKeys: [.contentModificationDateKey]))?
             .flatMap({ $0.contentModificationDate }) else { return "" }
-        return " · Built " + DateFormatter.localizedString(from: date, dateStyle: .medium, timeStyle: .short)
+        return "Built " + DateFormatter.localizedString(from: date, dateStyle: .medium, timeStyle: .short)
     }
 
     static func makeContentView(_ fitToContent: Bool = true, _ showFeedbackButton: Bool = true, _ centerHero: Bool = false) -> NSView {
@@ -17,7 +18,7 @@ class AboutTab {
         appIcon.fit(128, 128)
         let appText = StackView([
             BoldLabel(App.name),
-            NSTextField(labelWithString: NSLocalizedString("Version", comment: "") + " " + App.version + builtAt()),
+            NSTextField(labelWithString: NSLocalizedString("Version", comment: "") + " " + App.version),
             NSTextField(labelWithString: App.licence),
             HyperlinkLabel(NSLocalizedString("Website", comment: ""), Endpoints.website),
             HyperlinkLabel(NSLocalizedString("Source code", comment: ""), App.repository),
@@ -137,7 +138,7 @@ class AboutWindow: NSPanel {
         let weekCount = UsageStats.count("triggers", since: now.addingTimeInterval(-7 * 24 * 3600))
         let monthCount = UsageStats.count("triggers", since: now.addingTimeInterval(-30 * 24 * 3600))
         let yearCount = UsageStats.count("triggers", since: now.addingTimeInterval(-365 * 24 * 3600))
-        let markdown = "## \(NSLocalizedString("Usage", comment: ""))\n\nYou have used AltTab:\n\u{2022} **\(weekCount)** times in the past week\n\u{2022} **\(monthCount)** times in the past month\n\u{2022} **\(yearCount)** times in the past year"
+        let markdown = "## \(NSLocalizedString("Usage", comment: ""))\n\nYou have used AltTab:\n\u{2022} **\(weekCount)** times in the past week\n\u{2022} **\(monthCount)** times in the past month\n\u{2022} **\(yearCount)** times in the past year\n\n\(AboutTab.builtAt())"
         usageTextView.textStorage!.setAttributedString(Markdown.toAttributedString(markdown))
         usageTextView.layoutManager!.ensureLayout(for: usageTextView.textContainer!)
         let usedRect = usageTextView.layoutManager!.usedRect(for: usageTextView.textContainer!)

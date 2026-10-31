@@ -3,7 +3,7 @@ import Cocoa
 /// Settings for the matching groups of the Titles list: the ordered list on the left (drag to reorder, which is
 /// also the priority), the selected group's editor on the right. Every edit saves immediately.
 class MatchingGroupsTab: NSObject {
-    private static let sidebarWidth = CGFloat(220)
+    private static let sidebarWidth = CGFloat(160)
     private static let minContainerHeight = CGFloat(470)
     private static let predicateEditorHeight = CGFloat(240)
     private static let padding = TableGroupView.padding
@@ -22,6 +22,8 @@ class MatchingGroupsTab: NSObject {
     private let predicateEditor = NSPredicateEditor()
     private let loadWarning = NSTextField(labelWithString: "This rule couldn't be loaded. Editing it replaces it.")
     private let statusLabel = NSTextField(labelWithString: "")
+    private let regexHint = NSTextField(labelWithString: "“matches” is a regex over the whole value, e.g. ^Project.*")
+    private var predicateWidthObserver: NSObjectProtocol?
     private let emptyLabel = NSTextField(labelWithString: "Add a group with +")
 
     static func initTab() -> NSView {
@@ -32,6 +34,10 @@ class MatchingGroupsTab: NSObject {
 
     static func cleanup() {
         shared = nil
+    }
+
+    deinit {
+        if let predicateWidthObserver { NotificationCenter.default.removeObserver(predicateWidthObserver) }
     }
 
     private var selectedIndex: Int? {
@@ -180,11 +186,13 @@ class MatchingGroupsTab: NSObject {
         editorStack.spacing = 12
         editorStack.translatesAutoresizingMaskIntoConstraints = false
         let predicateScrollView = makePredicateEditor()
-        [makeNameRow(), makeEnabledRow(), makeRuleLabel(), predicateScrollView, loadWarning, statusLabel]
+        [makeNameRow(), makeEnabledRow(), makeRuleLabel(), predicateScrollView, regexHint, loadWarning, statusLabel]
             .forEach { editorStack.addArrangedSubview($0) }
         predicateScrollView.widthAnchor.constraint(equalTo: editorStack.widthAnchor).isActive = true
         loadWarning.textColor = .systemOrange
         statusLabel.textColor = .secondaryLabelColor
+        regexHint.textColor = .secondaryLabelColor
+        regexHint.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
     }
 
     private func configureEmptyLabel() {
@@ -220,38 +228,105 @@ class MatchingGroupsTab: NSObject {
     }
 
     /// `NSPredicateEditor` is AppKit's smart-folder rule builder; the predicate it builds is what's stored.
+    ///
+    /// It pins each row's +/− to its own right edge, so its width is kept equal to the visible width (it
+    /// sizes only its height to its rows). Stretching it with the scroll view instead added the clip view's
+    /// whole width on top of its starting one when Auto Layout first sized it: the buttons ended up one
+    /// screen to the right of the rest of the row.
     private func makePredicateEditor() -> NSScrollView {
-        predicateEditor.rowTemplates = [makeCompoundTemplate(), makeStringTemplate()]
-        predicateEditor.canRemoveAllRows = false
-        predicateEditor.target = self
-        predicateEditor.action = #selector(predicateChanged)
         let scrollView = NSScrollView()
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.heightAnchor.constraint(equalToConstant: Self.predicateEditorHeight).isActive = true
         scrollView.hasVerticalScroller = true
         scrollView.borderType = .bezelBorder
+        let visibleWidth = Self.predicateVisibleWidth(scrollView)
+        let valueWidth = Self.valueFieldWidth(fitting: visibleWidth)
+        predicateEditor.rowTemplates = [Self.makeCompoundTemplate(), Self.makeStringTemplate(valueWidth: valueWidth)]
+        predicateEditor.canRemoveAllRows = false
+        predicateEditor.target = self
+        predicateEditor.action = #selector(predicateChanged)
+        predicateEditor.autoresizingMask = []
+        predicateEditor.frame.size.width = visibleWidth
         scrollView.documentView = predicateEditor
-        predicateEditor.frame.size.width = Self.editorWidth - Self.padding * 2 - 4
-        predicateEditor.autoresizingMask = [.width]
+        trackVisibleWidth(scrollView.contentView)
         return scrollView
     }
 
-    private func makeCompoundTemplate() -> NSPredicateEditorRowTemplate {
+    private func trackVisibleWidth(_ clipView: NSClipView) {
+        clipView.postsFrameChangedNotifications = true
+        predicateWidthObserver = NotificationCenter.default.addObserver(forName: NSView.frameDidChangeNotification,
+            object: clipView, queue: .main) { [weak self] _ in
+            guard let editor = self?.predicateEditor, clipView.bounds.width > 0,
+                  editor.frame.width != clipView.bounds.width else { return }
+            editor.setFrameSize(NSSize(width: clipView.bounds.width, height: editor.frame.height))
+        }
+    }
+
+    /// The scroll view's inside width once laid out: the editor pane minus its padding, the bezel, and a
+    /// legacy scroller when the user's "Show scroll bars" setting reserves room for one.
+    private static func predicateVisibleWidth(_ scrollView: NSScrollView) -> CGFloat {
+        let outer = editorWidth - padding * 2
+        let border = NSScrollView.contentSize(forFrameSize: NSSize(width: outer, height: 100), horizontalScrollerClass: nil,
+            verticalScrollerClass: nil, borderType: .bezelBorder, controlSize: .regular, scrollerStyle: .overlay).width
+        let scroller = NSScroller.preferredScrollerStyle == .legacy
+            ? NSScroller.scrollerWidth(for: .regular, scrollerStyle: .legacy) : 0
+        return border - scroller
+    }
+
+    /// The value field's width is fixed per template, and the popups and the +/− take what they need, so the
+    /// field gets what's left of `width`. Measured on an offscreen probe row rather than hard-coded, since
+    /// the popups' widths follow the system font and the field titles.
+    private static func valueFieldWidth(fitting width: CGFloat) -> CGFloat {
+        let probeValueWidth = CGFloat(100)
+        let probeWidth = CGFloat(2000)
+        let probe = NSPredicateEditor(frame: NSRect(x: 0, y: 0, width: probeWidth, height: 200))
+        probe.rowTemplates = [makeCompoundTemplate(), makeStringTemplate(valueWidth: probeValueWidth)]
+        ObjCExceptionCatcher.catching {
+            probe.objectValue = NSCompoundPredicate(orPredicateWithSubpredicates: [MatchingGroups.parse(newGroupFormat)!])
+        }
+        let window = NSWindow(contentRect: probe.frame, styleMask: [.borderless], backing: .buffered, defer: true)
+        window.contentView = probe
+        probe.layoutSubtreeIfNeeded()
+        let (contentEdge, buttonsStart) = controlEdges(probe)
+        window.contentView = nil
+        guard contentEdge > 0, buttonsStart < probeWidth else { return 120 }
+        let fixed = contentEdge - probeValueWidth + (probeWidth - buttonsStart) + 8
+        return max(80, (width - fixed).rounded(.down))
+    }
+
+    /// The right edge of the popups and value fields, and the left edge of the +/− buttons, in `editor`.
+    private static func controlEdges(_ editor: NSView) -> (contentEdge: CGFloat, buttonsStart: CGFloat) {
+        var contentEdge = CGFloat(0)
+        var buttonsStart = CGFloat.infinity
+        var pending = editor.subviews
+        while let view = pending.popLast() {
+            pending += view.subviews
+            let frame = view.convert(view.bounds, to: editor)
+            if view is NSPopUpButton || view is NSTextField {
+                contentEdge = max(contentEdge, frame.maxX)
+            } else if view is NSButton {
+                buttonsStart = min(buttonsStart, frame.minX)
+            }
+        }
+        return (contentEdge, buttonsStart)
+    }
+
+    private static func makeCompoundTemplate() -> NSPredicateEditorRowTemplate {
         NSPredicateEditorRowTemplate(compoundTypes: [NSCompoundPredicate.LogicalType.or, .and, .not].map { NSNumber(value: $0.rawValue) })
     }
 
-    private func makeStringTemplate() -> NSPredicateEditorRowTemplate {
+    private static func makeStringTemplate(valueWidth: CGFloat) -> NSPredicateEditorRowTemplate {
         let operators: [NSComparisonPredicate.Operator] = [.equalTo, .notEqualTo, .contains, .beginsWith, .endsWith, .matches]
         let template = NSPredicateEditorRowTemplate(leftExpressions: MatchingGroupFacts.keys.map { NSExpression(forKeyPath: $0) },
             rightExpressionAttributeType: .stringAttributeType, modifier: .direct,
             operators: operators.map { NSNumber(value: $0.rawValue) },
             options: Int(NSComparisonPredicate.Options.caseInsensitive.rawValue))
-        labelFields(template)
+        labelFields(template, valueWidth: valueWidth)
         return template
     }
 
     /// The field popup shows key paths ("bundleId") by default; the items keep their expression, only the title changes.
-    private func labelFields(_ template: NSPredicateEditorRowTemplate) {
+    private static func labelFields(_ template: NSPredicateEditorRowTemplate, valueWidth: CGFloat) {
         let titles = ["title": "Title", "app": "App name", "bundleId": "Bundle ID"]
         if let fields = template.templateViews.first as? NSPopUpButton {
             for item in fields.itemArray {
@@ -260,8 +335,8 @@ class MatchingGroupsTab: NSObject {
             }
         }
         if let value = template.templateViews.last as? NSTextField {
-            value.placeholderString = "“matches” is a full-string regex, e.g. ^Project.*"
-            value.frame.size.width = 260
+            value.placeholderString = "Value"
+            value.frame.size.width = valueWidth
         }
     }
 
