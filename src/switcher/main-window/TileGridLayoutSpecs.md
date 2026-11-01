@@ -97,3 +97,12 @@ Mirrors `TileGridLayoutTests.swift` 1:1.
 - **testAutoKeepsTheSmallestWhenNothingFits** — every candidate is measured and the last one is returned.
 - **testAutoMeasuresEachCandidateExactlyOnce** — the measurement has side effects in production
   (`Appearance.applySize`), so the call order and count are part of the contract.
+
+### G. Matching-group headers
+`Input.sectionStarts` are tile positions that open a section: each starts a new row (unless it is the first
+tile), records a header origin at the row's leading edge (its right edge in RTL), and moves the tile down by
+`headerHeight`. `rows` lists tiles only, so ↑/↓ navigation skips headers.
+- **testSectionAtPositionZeroPutsItsHeaderFirstWithoutABlankRow** — header first, tile under it, no empty row.
+- **testConsecutiveSectionsEachStartARowUnderTheirHeader** — tiles that would share a row are split by sections.
+- **testRightToLeftHeadersSitOnTheTrailingEdgeOfTheGrid** — RTL header origins are the right edge.
+- **testMaxYIncludesTheHeaders** — the panel height counts every header.

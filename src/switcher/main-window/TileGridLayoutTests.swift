@@ -183,4 +183,37 @@ final class TileGridLayoutTests: XCTestCase {
         XCTAssertEqual(measured, ["large", "medium", "small"])
         XCTAssertEqual(picked, measured.last)
     }
+
+    // MARK: - G. Matching-group headers
+
+    private func sectioned(_ widths: [CGFloat], starts: [Int], widthMax: CGFloat = 100,
+                           isLeftToRight: Bool = true) -> TileGridLayout.Result {
+        TileGridLayout.compute(TileGridLayout.Input(widths: widths, tileHeight: tileHeight, widthMax: widthMax,
+            padding: padding, isLeftToRight: isLeftToRight, sectionStarts: starts, headerHeight: 20))
+    }
+
+    func testSectionAtPositionZeroPutsItsHeaderFirstWithoutABlankRow() {
+        let result = sectioned([90, 90], starts: [0])
+        XCTAssertEqual(result.headerOrigins, [CGPoint(x: 5, y: 5)])
+        XCTAssertEqual(result.origins, [CGPoint(x: 5, y: 25), CGPoint(x: 5, y: 130)])
+        XCTAssertEqual(result.rows, [[0], [1]])
+    }
+
+    func testConsecutiveSectionsEachStartARowUnderTheirHeader() {
+        let result = sectioned([40, 40, 40], starts: [0, 1, 2])
+        XCTAssertEqual(result.headerOrigins, [CGPoint(x: 5, y: 5), CGPoint(x: 5, y: 130), CGPoint(x: 5, y: 255)])
+        XCTAssertEqual(result.origins.map { $0.y }, [25, 150, 275])
+        XCTAssertEqual(result.rows, [[0], [1], [2]])
+    }
+
+    func testRightToLeftHeadersSitOnTheTrailingEdgeOfTheGrid() {
+        let result = sectioned([40, 40], starts: [0, 1], isLeftToRight: false)
+        XCTAssertEqual(result.headerOrigins.map { $0.x }, [95, 95])
+        XCTAssertEqual(result.origins.map { $0.x }, [55, 55])
+    }
+
+    func testMaxYIncludesTheHeaders() {
+        XCTAssertEqual(sectioned([90, 90], starts: [0, 1]).maxY, 5 + 20 + 100 + 5 + 20 + 100 + 5)
+        XCTAssertEqual(sectioned([90], starts: [0]).maxY, 5 + 20 + 100 + 5)
+    }
 }

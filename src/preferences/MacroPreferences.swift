@@ -168,6 +168,18 @@ enum WindowOrderPreference: CaseIterable, MacroPreference {
     }
 }
 
+enum MatchingGroupsPreference: CaseIterable, MacroPreference {
+    case off
+    case byRules
+
+    var localizedString: LocalizedString {
+        switch self {
+            case .off: return "Off"
+            case .byRules: return "By matching groups"
+        }
+    }
+}
+
 enum AppsToShowPreference: CaseIterable, MacroPreference {
     case all
     case active

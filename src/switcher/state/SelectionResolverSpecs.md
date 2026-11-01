@@ -246,3 +246,10 @@ tab-switch interval where attention still names the outgoing background tab.
   intent before changing the selected index, so an immediate model refresh follows the chosen window.
 - **testDefaultDoesNotTrailAWindowThatSlidDownTheList** — the captured failure: the default locked onto a
   window that then slid down the list, dragging the highlight to a nonsense slot.
+
+### H. Matching groups
+Sections reorder the list, but "the window you were on before" is a fact about the ungrouped order. The shell
+fills `SelectionWindow.ungroupedPosition` while matching groups are on, and the default pick is judged in that
+order then mapped back to a list index. The last-focused rule (non-MRU window orders) is unchanged.
+- **testInitialPickInAGroupedListLandsOnThePreviousWindow** — the previous window sits in the second section;
+  the default selection still lands on it.

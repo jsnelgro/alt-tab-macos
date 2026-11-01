@@ -156,6 +156,46 @@ final class WindowOrderResolverTests: XCTestCase {
         let a = w(lastFocusOrder: 3)
         XCTAssertFalse(WindowOrderResolver.isOrderedBefore(a, a, sortType: .recentlyFocused))
     }
+
+    // MARK: - H. Matching groups
+
+    private func ranked(_ rank: Int, pinned: Bool = false, searchMatches: Bool = false, searchRelevance: Double = 0,
+                        isMinimized: Bool = false, lastFocusOrder: Int = 0) -> OrderWindow {
+        var window = w(searchMatches: searchMatches, searchRelevance: searchRelevance, isMinimized: isMinimized,
+                       lastFocusOrder: lastFocusOrder)
+        window.matchingGroupRank = rank
+        window.isPinnedBestMatch = pinned
+        return window
+    }
+
+    func testMatchingGroupRankIsThePrimaryKeyWithoutSearch() {
+        XCTAssertTrue(WindowOrderResolver.isOrderedBefore(ranked(0, lastFocusOrder: 9), ranked(1, lastFocusOrder: 0)))
+        XCTAssertFalse(WindowOrderResolver.isOrderedBefore(ranked(1, lastFocusOrder: 0), ranked(0, lastFocusOrder: 9)))
+    }
+
+    func testAtTheEndBucketsApplyWithinAMatchingGroup() {
+        XCTAssertTrue(WindowOrderResolver.isOrderedBefore(ranked(0, isMinimized: true), ranked(1), minimizedAtEnd: true))
+        XCTAssertTrue(WindowOrderResolver.isOrderedBefore(ranked(1, lastFocusOrder: 5), ranked(1, isMinimized: true, lastFocusOrder: 0),
+                                                          minimizedAtEnd: true))
+    }
+
+    func testRankZeroEverywhereReproducesTodaysOrder() {
+        let a = w(lastFocusOrder: 1), b = w(lastFocusOrder: 0)
+        XCTAssertEqual(WindowOrderResolver.isOrderedBefore(ranked(0, lastFocusOrder: 1), ranked(0, lastFocusOrder: 0)),
+                       WindowOrderResolver.isOrderedBefore(a, b))
+        XCTAssertEqual(WindowOrderResolver.isOrderedBefore(ranked(0, lastFocusOrder: 0), ranked(0, lastFocusOrder: 1)),
+                       WindowOrderResolver.isOrderedBefore(b, a))
+    }
+
+    func testSearchOrdersByMatchThenPinThenRankThenRelevance() {
+        XCTAssertTrue(WindowOrderResolver.isOrderedBefore(ranked(2, searchMatches: true), ranked(0, pinned: true), searchActive: true))
+        XCTAssertTrue(WindowOrderResolver.isOrderedBefore(ranked(2, pinned: true, searchMatches: true, searchRelevance: 1),
+                                                          ranked(0, searchMatches: true, searchRelevance: 5), searchActive: true))
+        XCTAssertTrue(WindowOrderResolver.isOrderedBefore(ranked(0, searchMatches: true, searchRelevance: 1),
+                                                          ranked(1, searchMatches: true, searchRelevance: 5), searchActive: true))
+        XCTAssertTrue(WindowOrderResolver.isOrderedBefore(ranked(1, searchMatches: true, searchRelevance: 5),
+                                                          ranked(1, searchMatches: true, searchRelevance: 1), searchActive: true))
+    }
 }
 
 final class ApplicationRepresentativeResolverTests: XCTestCase {

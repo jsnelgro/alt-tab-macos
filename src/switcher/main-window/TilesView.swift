@@ -20,6 +20,10 @@ class TilesView {
     static var rows = [[TileView]]()
     private static var lastRowSignature = [Int]()
     static var recycledViews = [TileView]()
+    /// Grows on demand and never shrinks, like `recycledViews`.
+    static var matchingGroupHeaderViews = [MatchingGroupHeaderView]()
+    /// The headers drawn this layout, keyed by the `Windows.list` index of the tile that opens their section.
+    private static var headerAboveTile = [Int: MatchingGroupHeaderView]()
     static var thumbnailsWidth = CGFloat(0.0)
     static var thumbnailsHeight = CGFloat(0.0)
     static var layoutCache = LayoutCache()
@@ -306,6 +310,7 @@ class TilesView {
     static func updateCachedSizes() {
         guard let firstView = TilesView.recycledViews.first else { return }
         layoutCache.labelHeight = labelLineHeight()
+        layoutCache.headerHeight = MatchingGroupHeaderView.height()
         let iconCellSize = firstView.statusIcons.iconCellSize
         layoutCache.iconWidth = iconCellSize.width
         layoutCache.iconHeight = iconCellSize.height
@@ -506,7 +511,7 @@ class TilesView {
     private static func dryRunLayoutTileViews(_ widthMax: CGFloat) -> CGFloat {
         let height = TileView.height(Self.layoutCache.labelHeight)
         let tiles = fillTiles(height).tiles
-        return TileGridLayout.compute(gridInput(tiles, height, widthMax)).maxY
+        return TileGridLayout.compute(gridInput(tiles, height, widthMax, sectionStarts(tiles))).maxY
     }
 
     /// Puts this render's window on every recycled tile that has one, and releases the images the rest are
@@ -535,10 +540,52 @@ class TilesView {
         return (tiles, false)
     }
 
-    private static func gridInput(_ tiles: [(index: Int, view: TileView)], _ height: CGFloat, _ widthMax: CGFloat) -> TileGridLayout.Input {
+    private static func gridInput(_ tiles: [(index: Int, view: TileView)], _ height: CGFloat, _ widthMax: CGFloat,
+                                  _ sectionStarts: [Int]) -> TileGridLayout.Input {
         TileGridLayout.Input(widths: tiles.map { $0.view.frame.size.width }, tileHeight: height, widthMax: widthMax,
             padding: Appearance.interCellPadding,
-            isLeftToRight: App.shared.userInterfaceLayoutDirection == .leftToRight)
+            isLeftToRight: App.shared.userInterfaceLayoutDirection == .leftToRight,
+            sectionStarts: sectionStarts, headerHeight: layoutCache.headerHeight)
+    }
+
+    /// Every window has rank 0 and none is pinned while matching groups are off, so this is empty then.
+    private static func sectionStarts(_ tiles: [(index: Int, view: TileView)]) -> [Int] {
+        guard let first = tiles.first else { return [] }
+        return MatchingGroupResolver.sectionStarts(ranks: tiles.map { Windows.list[$0.index].matchingGroupRank },
+            firstIsPinned: Windows.list[first.index].isPinnedBestMatch)
+    }
+
+    private static func placeMatchingGroupHeaders(_ tiles: [(index: Int, view: TileView)], _ starts: [Int],
+                                                  _ origins: [CGPoint]) -> [MatchingGroupHeaderView] {
+        while matchingGroupHeaderViews.count < starts.count { matchingGroupHeaderViews.append(MatchingGroupHeaderView()) }
+        headerAboveTile.removeAll(keepingCapacity: true)
+        return starts.enumerated().map { (i, position) in
+            let header = matchingGroupHeaderViews[i]
+            let index = tiles[position].index
+            header.update(MatchingGroups.sectionName(Windows.list[index].matchingGroupRank))
+            header.frame.origin = origins[i]
+            header.frame.size.height = layoutCache.headerHeight
+            headerAboveTile[index] = header
+            return header
+        }
+    }
+
+    /// Widths are only known once `thumbnailsWidth` is. In RTL the layout gave each header its trailing edge.
+    private static func sizeMatchingGroupHeaders() {
+        let width = max(0, TilesView.thumbnailsWidth - Appearance.interCellPadding * 2)
+        let isLeftToRight = App.shared.userInterfaceLayoutDirection == .leftToRight
+        for header in headerAboveTile.values {
+            header.frame.size.width = width
+            if !isLeftToRight { header.frame.origin.x -= width }
+        }
+    }
+
+    /// The tile's frame, plus its section header when it opens one, so scrolling to the top of a section
+    /// shows the section's name.
+    static func scrollTargetFrame(_ index: Int) -> CGRect {
+        let frame = recycledViews[index].frame
+        guard let header = headerAboveTile[index] else { return frame }
+        return frame.union(header.frame)
     }
 
     private static func layoutTileViews(_ widthMax: CGFloat) -> (CGFloat, CGFloat, CGFloat, [Int])? {
@@ -547,7 +594,8 @@ class TilesView {
         let filled = fillTiles(height)
         guard !filled.aborted else { return nil }
         let tiles = filled.tiles
-        let layout = TileGridLayout.compute(gridInput(tiles, height, widthMax))
+        let starts = sectionStarts(tiles)
+        let layout = TileGridLayout.compute(gridInput(tiles, height, widthMax, starts))
         for (position, tile) in tiles.enumerated() {
             tile.view.frame.origin = layout.origins[position]
         }
@@ -559,7 +607,8 @@ class TilesView {
         let rowSignature = tiles.map { $0.index }
         let maxX = layout.maxX
         let maxY = layout.maxY
-        scrollView.documentView!.subviews = newViews
+        let headers = placeMatchingGroupHeaders(tiles, starts, layout.headerOrigins)
+        scrollView.documentView!.subviews = (newViews as [NSView]) + headers
         scrollView.documentView!.addSubview(thumbnailOverView)
         thumbnailOverView.scrollView = scrollView
         let docLayer = scrollView.documentView!.layer!
@@ -609,6 +658,7 @@ class TilesView {
         } else if searchField.superview != nil {
             searchField.removeFromSuperview()
         }
+        sizeMatchingGroupHeaders()
         if App.shared.userInterfaceLayoutDirection == .rightToLeft {
             let croppedWidth = TileGridLayout.rightToLeftCropOffset(layoutWidth: widthMax, viewportWidth: TilesView.thumbnailsWidth)
             scrollView.documentView!.subviews.forEach { $0.frame.origin.x -= croppedWidth }
@@ -707,6 +757,7 @@ class TilesView {
 
     struct LayoutCache {
         var labelHeight = CGFloat(0)
+        var headerHeight = CGFloat(0)
         var iconWidth = CGFloat(0)
         var iconHeight = CGFloat(0)
         var comfortableReadabilityWidth: CGFloat?

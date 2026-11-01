@@ -22,6 +22,10 @@ struct SelectionWindow: Equatable {
     /// Being a newcomer is not on its own a reason to step over it — see `defaultPickIndexAsOfSummon`,
     /// which only does so for the ones that lengthened the list rather than replaced a window that left it.
     var appearedAfterSummon = false
+    /// Where this window would sit with matching groups off; nil while they're off. Sections reorder the
+    /// list, but "the window you were on before" is a fact about the ungrouped order, so the default pick
+    /// is judged there (see `initialPickIndex`).
+    var ungroupedPosition: Int? = nil
 }
 
 /// Snapshot of everything the kernel needs to pick the next selection. No globals, no AppKit.
@@ -151,11 +155,21 @@ enum SelectionResolver {
         if i.useLastFocusedRule, let idx = getLastFocusedOrderWindowIndex(i.list) {
             return idx
         }
+        let order = ungroupedOrder(i.list)
+        return defaultPickIndex(order.map { i.list[$0] }, i).map { order[$0] }
+    }
+
+    /// List indexes sorted by `ungroupedPosition`; the identity when no window has one.
+    static func ungroupedOrder(_ list: [SelectionWindow]) -> [Int] {
+        list.indices.sorted { (list[$0].ungroupedPosition ?? $0, $0) < (list[$1].ungroupedPosition ?? $1, $1) }
+    }
+
+    private static func defaultPickIndex(_ list: [SelectionWindow], _ i: SelectionInputs) -> Int? {
         // Edge case: top two windows both minimized — land on index 0 rather than cycling past.
-        if i.list.count >= 2 && i.list[0].isMinimized && i.list[1].isMinimized {
-            return i.list[0].visible ? 0 : nil
+        if list.count >= 2 && list[0].isMinimized && list[1].isMinimized {
+            return list[0].visible ? 0 : nil
         }
-        return defaultPickIndexAsOfSummon(i.list, i.visibleCountAtSummon, i.currentWindowIsDrawn)
+        return defaultPickIndexAsOfSummon(list, i.visibleCountAtSummon, i.currentWindowIsDrawn)
     }
 
     /// The default pick, over the MRU as it stood when the shortcut was pressed.

@@ -706,4 +706,16 @@ final class SelectionResolverTests: XCTestCase {
         XCTAssertEqual(SelectionResolver.reanchorHover(target: "b", in: ["a", "b", "c"]), 1)
     }
 
+    // MARK: - H. Matching groups
+
+    /// H1. Grouping moved the previous window into the second section. The default pick is judged in the
+    /// ungrouped order, so it still lands on the window the user was on before.
+    func testInitialPickInAGroupedListLandsOnThePreviousWindow() {
+        var current = w("current", focusOrder: 0), other = w("other", focusOrder: 2), prev = w("prev", focusOrder: 1)
+        current.ungroupedPosition = 0
+        prev.ungroupedPosition = 1
+        other.ungroupedPosition = 2
+        let i = inputs(list: [current, other, prev], userPickedSelection: false)
+        XCTAssertEqual(SelectionResolver.decide(i), .resetThenSelect(2))
+    }
 }
