@@ -80,8 +80,15 @@ enum BrowserTabs {
         let removed = Set(result.remove)
         Windows.removeBrowserTabRows(existing.filter { removed.contains($0.id) })
         let inserted = insert(result.insert.compactMap { wanted[$0] })
+        requestFavicons(snapshot.pid)
         guard updated || !removed.isEmpty || inserted else { return }
         App.refreshOpenUiAfterExternalEvent([])
+    }
+
+    private static func requestFavicons(_ pid: pid_t) {
+        BrowserFavicons.prune(keeping: Set(Windows.list.compactMap { $0.browserTab?.tab.url }))
+        guard let browser = browser(pid) else { return }
+        BrowserFavicons.request(rows(pid).compactMap { $0.browserTab?.tab.url }, browser)
     }
 
     private static func trackedWindows(_ pid: pid_t) -> [BrowserWindowMatcher.Tracked] {

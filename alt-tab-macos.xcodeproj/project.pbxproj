@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5EB7A5000000000000000102 /* BrowserFaviconPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000101 /* BrowserFaviconPicker.swift */; };
+		5EB7A5000000000000000103 /* BrowserFaviconPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000101 /* BrowserFaviconPicker.swift */; };
+		5EB7A5000000000000000106 /* BrowserFaviconPickerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000105 /* BrowserFaviconPickerTests.swift */; };
+		5EB7A5000000000000000108 /* BrowserFavicons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000107 /* BrowserFavicons.swift */; };
 		5EB7A5000000000000000002 /* BrowserTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000001 /* BrowserTab.swift */; };
 		5EB7A5000000000000000003 /* BrowserTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000001 /* BrowserTab.swift */; };
 		5EB7A5000000000000000005 /* BrowserDialect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000004 /* BrowserDialect.swift */; };
@@ -513,6 +517,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		5EB7A5000000000000000101 /* BrowserFaviconPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserFaviconPicker.swift; sourceTree = "<group>"; };
+		5EB7A5000000000000000104 /* BrowserFaviconPickerSpecs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BrowserFaviconPickerSpecs.md; sourceTree = "<group>"; };
+		5EB7A5000000000000000105 /* BrowserFaviconPickerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserFaviconPickerTests.swift; sourceTree = "<group>"; };
+		5EB7A5000000000000000107 /* BrowserFavicons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserFavicons.swift; sourceTree = "<group>"; };
 		5EB7A5000000000000000001 /* BrowserTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserTab.swift; sourceTree = "<group>"; };
 		5EB7A5000000000000000004 /* BrowserDialect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserDialect.swift; sourceTree = "<group>"; };
 		5EB7A5000000000000000006 /* BrowserTabReplyParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserTabReplyParser.swift; sourceTree = "<group>"; };
@@ -1007,6 +1015,10 @@
 		5EB7A5000000000000000030 /* browser-tabs */ = {
 			isa = PBXGroup;
 			children = (
+				5EB7A5000000000000000101 /* BrowserFaviconPicker.swift */,
+				5EB7A5000000000000000104 /* BrowserFaviconPickerSpecs.md */,
+				5EB7A5000000000000000105 /* BrowserFaviconPickerTests.swift */,
+				5EB7A5000000000000000107 /* BrowserFavicons.swift */,
 				5EB7A5000000000000000001 /* BrowserTab.swift */,
 				5EB7A5000000000000000004 /* BrowserDialect.swift */,
 				5EB7A5000000000000000006 /* BrowserTabReplyParser.swift */,
@@ -2216,6 +2228,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				5EA7C4000000000000000003 /* MatchingGroupRule.swift in Sources */,
+				5EB7A5000000000000000103 /* BrowserFaviconPicker.swift in Sources */,
+				5EB7A5000000000000000106 /* BrowserFaviconPickerTests.swift in Sources */,
 				5EB7A5000000000000000003 /* BrowserTab.swift in Sources */,
 				5EB7A5000000000000000008 /* BrowserTabReplyParser.swift in Sources */,
 				5EB7A5000000000000000011 /* BrowserTabReplyParserTests.swift in Sources */,
@@ -2403,6 +2417,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				5EA7C4000000000000000002 /* MatchingGroupRule.swift in Sources */,
+				5EB7A5000000000000000102 /* BrowserFaviconPicker.swift in Sources */,
+				5EB7A5000000000000000108 /* BrowserFavicons.swift in Sources */,
 				5EB7A5000000000000000002 /* BrowserTab.swift in Sources */,
 				5EB7A5000000000000000005 /* BrowserDialect.swift in Sources */,
 				5EB7A5000000000000000007 /* BrowserTabReplyParser.swift in Sources */,

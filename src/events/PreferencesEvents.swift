@@ -82,6 +82,7 @@ class PreferencesEvents {
         case "startAtLogin": LoginItem.applyCurrentPreference()
         case "updatePolicy": applyUpdatePolicyPreference()
         case "matchingGroups": MatchingGroups.reload()
+        case "browserTabFavicons": BrowserFavicons.preferenceChanged()
         case let k where k.hasPrefix("browserTabs"): BrowserTabs.preferenceChanged()
         case let k where preferencesRequiringUiReset.contains(k): App.resetPreferencesDependentComponents()
         case let k where isOverrideKey(k) || isPerShortcutGroupingKey(k): App.resetPreferencesDependentComponents()

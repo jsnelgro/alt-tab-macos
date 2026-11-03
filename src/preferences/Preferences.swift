@@ -38,6 +38,7 @@ class Preferences {
             "exceptions": defaultExceptions(),
             "matchingGroups": "[]",
             "matchingGroupsPinTopResult": "true",
+            "browserTabFavicons": "false",
             "updatePolicy": UpdatePolicyPreference.autoCheck.indexAsString,
             "crashPolicy": CrashPolicyPreference.ask.indexAsString,
             "hideThumbnails": "false",
@@ -120,6 +121,7 @@ class Preferences {
     static var startAtLogin: Bool { CachedUserDefaults.bool("startAtLogin") }
     static var exceptions: [ExceptionEntry] { CachedUserDefaults.json("exceptions", [ExceptionEntry].self) }
     static var matchingGroupsPinTopResult: Bool { CachedUserDefaults.bool("matchingGroupsPinTopResult") }
+    static var browserTabFavicons: Bool { CachedUserDefaults.bool("browserTabFavicons") }
     static var matchingGroups: [MatchingGroupRule] {
         CachedUserDefaults.json("matchingGroups", [LenientDecodable<MatchingGroupRule>].self).compactMap { $0.value }
     }

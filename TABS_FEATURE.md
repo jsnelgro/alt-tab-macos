@@ -118,8 +118,9 @@ There are three kinds of "tabs" on macOS. Only one of them needs new work:
 
 ## Non-goals (for now)
 
-- Favicons. The browsers' scripting interfaces don't expose them, and fetching them over the network is not
-  worth it. Tab rows use the browser's app icon.
+- Favicons over the network. The scripting interfaces don't expose icons, so they're read instead from each
+  Chromium profile's own `Favicons` cache, opt-in (Settings → Browser tabs → "Show site icons"). See
+  `BrowserFaviconPickerSpecs.md`. Tab rows fall back to the browser's app icon.
 - Ordering tabs by when they were last used. See "Tab recency" in Part 3.
 - Thumbnails and App Icons styles.
 - Browser extensions.

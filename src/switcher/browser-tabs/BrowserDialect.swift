@@ -5,6 +5,9 @@ struct SupportedBrowser: Equatable {
     let bundleId: String
     let name: String
     let dialect: BrowserDialect
+    /// Under `~/Library/Application Support`: the folder holding the browser's profiles (`Default`, `Profile 1`…),
+    /// each with its own `Favicons` cache.
+    let dataDirectory: String
 }
 
 extension BrowserDialect {
@@ -12,8 +15,8 @@ extension BrowserDialect {
     /// tell a private window from a normal one, so its private tabs would be listed. Its dialect is kept (script
     /// and parser) for the day a reliable private-window signal is found.
     static let supported = [
-        SupportedBrowser(bundleId: "net.imput.helium", name: "Helium", dialect: .chromium),
-        SupportedBrowser(bundleId: "com.brave.Browser", name: "Brave", dialect: .chromium),
+        SupportedBrowser(bundleId: "net.imput.helium", name: "Helium", dialect: .chromium, dataDirectory: "net.imput.helium"),
+        SupportedBrowser(bundleId: "com.brave.Browser", name: "Brave", dialect: .chromium, dataDirectory: "BraveSoftware/Brave-Browser"),
     ]
 
     static func browser(_ bundleId: String?) -> SupportedBrowser? {

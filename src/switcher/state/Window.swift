@@ -48,7 +48,8 @@ class Window {
         guard let position = self.position, let size = self.size else { return nil }
         return CGRect(origin: position, size: size)
     }
-    var icon: CGImage? { get { application.icon } }
+    /// A browser tab row shows its site's icon once `BrowserFavicons` has it.
+    var icon: CGImage? { browserTab.flatMap { BrowserFavicons.icon($0.tab.url) } ?? application.icon }
     var shouldShowTheUser = true
     /// DERIVED from the `TabGroups` registry (the single owner of group membership): the ordered members of
     /// this window's group, or nil when it's in none. The registry can't hold a group of one, so the

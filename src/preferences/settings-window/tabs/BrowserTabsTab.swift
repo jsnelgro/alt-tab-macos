@@ -1,12 +1,17 @@
 import Cocoa
 
 /// Settings → Browser tabs: one row per installed supported browser, with its Automation access and the one
-/// button allowed to trigger the macOS prompt. Listing tabs is turned on per shortcut ("Browser tabs").
+/// button allowed to trigger the macOS prompt. Listing tabs is turned on per shortcut ("Browser tabs"). Below it,
+/// "Show site icons", the one place that touches the browsers' icon caches for the first time (`BrowserFavicons`).
 class BrowserTabsTab: NSObject {
     private static var shared: BrowserTabsTab?
     private static let automationSettingsUrl = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Automation")!
+    private static let fullDiskAccessUrl = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!
 
     private var rows = [(browser: SupportedBrowser, status: NSTextField, button: NSButton)]()
+    private let showIcons = NSButton(checkboxWithTitle: "Show site icons", target: nil, action: nil)
+    private let blockedHint = NSTextField(wrappingLabelWithString: "")
+    private let openFullDiskAccess = NSButton(title: "Open Full Disk Access…", target: nil, action: nil)
 
     static func initTab() -> NSView {
         let tab = BrowserTabsTab()
@@ -35,7 +40,34 @@ class BrowserTabsTab: NSObject {
         hint.preferredMaxLayoutWidth = SettingsWindow.contentWidth - TableGroupSetView.leftRightPadding
         refresh()
         BrowserTabs.checkAccess { [weak self] in self?.refresh() }
-        return TableGroupSetView(originalViews: [table, hint], padding: 0, bottomPadding: 0)
+        if Preferences.browserTabFavicons { BrowserFavicons.checkInstalledBrowsers { [weak self] in self?.refresh() } }
+        return TableGroupSetView(originalViews: [table, hint, makeIconsTable()], padding: 0, bottomPadding: 0)
+    }
+
+    /// Icons come from each browser's own cache on disk. macOS guards some browsers' data folders, so ticking
+    /// the box may raise its "access data from other apps" prompt; refusing it leaves that browser's icon.
+    private func makeIconsTable() -> NSView {
+        showIcons.state = Preferences.browserTabFavicons ? .on : .off
+        showIcons.target = self
+        showIcons.action = #selector(showIconsChanged)
+        openFullDiskAccess.target = self
+        openFullDiskAccess.action = #selector(openFullDiskAccessClicked)
+        blockedHint.textColor = .secondaryLabelColor
+        blockedHint.preferredMaxLayoutWidth = SettingsWindow.contentWidth - 200
+        let table = TableGroupView(width: SettingsWindow.contentWidth)
+        table.addRow(TableGroupView.Row(leftTitle: "Tab icons", subTitle: "Read from each browser's icon cache, never from the network.", rightViews: [showIcons]))
+        table.addRow(TableGroupView.Row(leftTitle: "", rightViews: [blockedHint, openFullDiskAccess]))
+        return table
+    }
+
+    @objc private func showIconsChanged() {
+        Preferences.set("browserTabFavicons", String(showIcons.state == .on))
+        guard showIcons.state == .on else { return refresh() }
+        BrowserFavicons.checkInstalledBrowsers { [weak self] in self?.refresh() }
+    }
+
+    @objc private func openFullDiskAccessClicked() {
+        NSWorkspace.shared.open(Self.fullDiskAccessUrl)
     }
 
     private func refresh() {
@@ -47,6 +79,15 @@ class BrowserTabsTab: NSObject {
             row.button.title = access == .denied ? "Open System Settings…" : "Grant access…"
             row.button.isEnabled = access == .denied || (access != .allowed && isRunning)
         }
+        refreshIconsStatus()
+    }
+
+    private func refreshIconsStatus() {
+        let blocked = rows.map { $0.browser }.filter { BrowserFavicons.blocked.contains($0.bundleId) }.map { $0.name }
+        let shown = Preferences.browserTabFavicons && !blocked.isEmpty
+        blockedHint.stringValue = shown ? "macOS blocks reading \(blocked.joined(separator: " and "))'s icons. Allow AltTab in Full Disk Access, then open this page again." : ""
+        blockedHint.isHidden = !shown
+        openFullDiskAccess.isHidden = !shown
     }
 
     private static func label(_ access: BrowserAccess, isRunning: Bool) -> String {
