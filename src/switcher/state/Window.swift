@@ -48,7 +48,8 @@ class Window {
         guard let position = self.position, let size = self.size else { return nil }
         return CGRect(origin: position, size: size)
     }
-    var icon: CGImage? { get { application.icon } }
+    /// A browser tab row shows its site's icon once `BrowserFavicons` has it.
+    var icon: CGImage? { browserTab.flatMap { BrowserFavicons.icon($0.tab.url) } ?? application.icon }
     var shouldShowTheUser = true
     /// DERIVED from the `TabGroups` registry (the single owner of group membership): the ordered members of
     /// this window's group, or nil when it's in none. The registry can't hold a group of one, so the
@@ -81,6 +82,9 @@ class Window {
     var swAppMatchSpan: Range<Int>?
     var swTitleMatchSpan: Range<Int>?
     var swBestSimilarity = 0.0
+    /// Non-nil exactly for a browser tab row: display-only, never seen by the model (the reducer snapshot, MRU
+    /// ranks and windowless placeholders all skip it). Owned by `BrowserTabs`.
+    private(set) var browserTab: BrowserTabRef?
 
     /// Forwards every `TrackedWindow` field by name — `window.title` resolves to the backing record,
     /// `window.isFullscreen = true` writes through. Replaces a stack of one-per-field computed
@@ -147,6 +151,41 @@ class Window {
         Logger.debug { self.debugId }
     }
 
+    /// A row for one of a browser window's background tabs. Skips everything model-side the other inits do
+    /// (windowless placeholder removal, AX element, focus check): the parent window already did that.
+    /// `lastFocusOrder` is `Int.max` so it never collides with a real MRU rank; it sorts by its parent's.
+    init(browserTab ref: BrowserTabRef, parent: Window) {
+        tracked = TrackedWindow(id: BrowserTabRowsDiff.rowId(pid: parent.application.pid, ref), wid: nil,
+            pid: parent.application.pid, spaceIds: parent.spaceIds, spaceIndexes: parent.spaceIndexes)
+        admissionEvidence = .discovery
+        semanticSurface = nil
+        application = parent.application
+        browserTab = ref
+        self.lastFocusOrder = Int.max
+        self.creationOrder = parent.creationOrder
+        updateBrowserTab(ref)
+        debugId = "\(application.debugId) (browserTab:\(ref.tab.key) parent:\(ref.parentWid))"
+        application.fetchAppIcon()
+    }
+
+    func updateBrowserTab(_ ref: BrowserTabRef) {
+        browserTab = ref
+        self.title = WindowTitle.singleLine(ref.tab.title.isEmpty ? ref.tab.url : ref.tab.title)
+        lastSearchQuery = nil
+    }
+
+    /// Display facts copied from the parent so the row's status icons and Space label match its window's.
+    func mirrorParentDisplayFacts(_ parent: Window) {
+        self.spaceIds = parent.spaceIds
+        self.spaceIndexes = parent.spaceIndexes
+        self.isOnAllSpaces = parent.isOnAllSpaces
+        self.isMinimized = parent.isMinimized
+        self.isFullscreen = parent.isFullscreen
+        self.position = parent.position
+        self.size = parent.size
+        screenId = parent.screenId
+    }
+
     deinit {
         // debug, not info: `TrackedWindowState.removalLog` already names every removal WITH the reason that
         // condemned it, which is the whole point of logging one (#5785)
@@ -178,6 +217,7 @@ class Window {
     ///   (`tracked.cgsPhantomLatch`, the only place the weak/alpha=0 case can come from — set by
     ///   `WindowEventReducer`) — see #5714.
     var isPhantom: Bool {
+        if browserTab != nil { return false }
         if let wid = cgWindowId {
             if Windows.windowsHeldVisibleForTab.contains(wid) { return false }
             // Group members are exempt only while their group has a CLAIM TO THE SCREEN (a member on some
@@ -276,11 +316,13 @@ class Window {
         return !self.isWindowlessApp
     }
 
+    /// A tab row closes its tab, not its window.
     func close() {
         if !canBeClosed() {
             NSSound.beep()
             return
         }
+        if let browserTab { return BrowserTabs.close(browserTab, pid: application.pid) }
         if let altTabWindow = altTabWindow() {
             altTabWindow.close()
             return
@@ -315,6 +357,7 @@ class Window {
     /// element to write to, so it fails safely with the same beep an ineligible window gets rather than
     /// force-unwrapping nil.
     func canBeMinDeminOrFullscreened() -> Bool {
+        if browserTab != nil { return BrowserTabs.parent(of: self)?.canBeMinDeminOrFullscreened() ?? false }
         return !self.isWindowlessApp && !self.isTabbed && (axUiElement != nil || altTabWindow() != nil)
     }
 
@@ -323,6 +366,7 @@ class Window {
             NSSound.beep()
             return
         }
+        if browserTab != nil { return BrowserTabs.parent(of: self)?.minDemin() ?? () }
         if let altTabWindow = altTabWindow() {
             self.isMinimized ? altTabWindow.deminiaturize(nil) : altTabWindow.miniaturize(nil)
             return
@@ -350,6 +394,7 @@ class Window {
             NSSound.beep()
             return
         }
+        if browserTab != nil { return BrowserTabs.parent(of: self)?.toggleFullscreen() ?? () }
         if let altTabWindow = altTabWindow() {
             altTabWindow.toggleFullScreen(nil)
             return
@@ -365,7 +410,12 @@ class Window {
     /// `onFronted` runs on main once step 1 has fronted the target (see `TilesPanel.orderOutOnceFronted`).
     func focus(_ onFronted: @escaping () -> Void = {}) {
         MainThreadStall.step()
-        if let altTabWindow = altTabWindow() {
+        if let browserTab {
+            // The tab switch goes first so the window comes forward already showing it.
+            // `TilesPanel.orderOutOnceFronted` keeps the panel up until the parent is fronted.
+            guard let parent = BrowserTabs.parent(of: self) else { return NSSound.beep() }
+            BrowserTabs.activate(browserTab, pid: application.pid) { parent.focus(onFronted) }
+        } else if let altTabWindow = altTabWindow() {
             // Our windows are only ordered out when closed, and stay listed until the phantom verdict lands.
             // Ordering one front would reopen what the user just dismissed.
             guard altTabWindow.isVisible || altTabWindow.isMiniaturized || App.shared.isHidden else { return }
@@ -708,7 +758,8 @@ class Window {
         // if the window is tabbed, we can't know its position/size before it's focused, so we use the currently
         // visible window-tab. Its data will match the tabbed window's
         // fallback to the focusedWindow
-        self.isTabbed ? (TabGroup.activeTabSibling(of: self) ?? application.focusedWindow) : self
+        if browserTab != nil { return BrowserTabs.parent(of: self) }
+        return self.isTabbed ? (TabGroup.activeTabSibling(of: self) ?? application.focusedWindow) : self
     }
 
     private func altTabWindow() -> NSWindow? {

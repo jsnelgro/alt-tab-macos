@@ -196,6 +196,62 @@ final class WindowOrderResolverTests: XCTestCase {
         XCTAssertTrue(WindowOrderResolver.isOrderedBefore(ranked(1, searchMatches: true, searchRelevance: 5),
                                                           ranked(1, searchMatches: true, searchRelevance: 1), searchActive: true))
     }
+
+    // MARK: - H. Browser tab rows
+
+    /// A tab row carries its parent's `state`, so a family shares `state.id` and every sort key.
+    private func family(_ id: String, slot: Int, lastFocusOrder: Int = 0, creationOrder: Int = 0, isMinimized: Bool = false,
+                        appName: String = "Helium", title: String = "Parent", rank: Int = 0) -> OrderWindow {
+        let state = WindowState(id: id, isPhantom: false, isWindowlessApp: false, isFullscreen: false,
+                                isMinimized: isMinimized, isTabbed: false, isOnAllSpaces: false, spaceIds: [],
+                                spaceIndexes: [1], lastFocusOrder: lastFocusOrder, creationOrder: creationOrder, title: title)
+        var o = OrderWindow(state: state, app: ApplicationState(pid: 0, bundleIdentifier: nil, localizedName: appName, isHidden: false),
+                            searchMatches: true, searchRelevance: 1)
+        o.browserTabSlot = slot
+        o.matchingGroupRank = rank
+        return o
+    }
+
+    private func sorted(_ items: [(String, OrderWindow)], sortType: OrderSortType = .recentlyFocused,
+                        minimizedAtEnd: Bool = false, searchActive: Bool = false) -> [String] {
+        items.sorted { WindowOrderResolver.isOrderedBefore($0.1, $1.1, searchActive: searchActive,
+            minimizedAtEnd: minimizedAtEnd, sortType: sortType) }.map { $0.0 }
+    }
+
+    func testBrowserTabRowSortsRightAfterItsParentInSlotOrderForEverySortType() {
+        let items = [
+            ("other", family("wid-2", slot: 0, lastFocusOrder: 1, creationOrder: 1, appName: "Xcode", title: "B")),
+            ("tab2", family("wid-1", slot: 2, creationOrder: 2)),
+            ("parent", family("wid-1", slot: 0, creationOrder: 2)),
+            ("tab1", family("wid-1", slot: 1, creationOrder: 2)),
+        ]
+        for sortType in [OrderSortType.recentlyFocused, .recentlyCreated, .alphabetical, .space] {
+            XCTAssertEqual(sorted(items, sortType: sortType), ["parent", "tab1", "tab2", "other"], "\(sortType)")
+        }
+    }
+
+    func testAtTheEndBucketMovesAMinimizedParentWithItsTabs() {
+        let items = [
+            ("tab", family("wid-1", slot: 1, isMinimized: true)),
+            ("parent", family("wid-1", slot: 0, isMinimized: true)),
+            ("other", family("wid-2", slot: 0, lastFocusOrder: 1)),
+        ]
+        XCTAssertEqual(sorted(items, minimizedAtEnd: true), ["other", "parent", "tab"])
+    }
+
+    func testMatchingGroupRankSeparatesATabFromItsParent() {
+        let items = [
+            ("tab", family("wid-1", slot: 1, rank: 0)),
+            ("parent", family("wid-1", slot: 0, rank: 1)),
+            ("other", family("wid-2", slot: 0, lastFocusOrder: 1, rank: 1)),
+        ]
+        XCTAssertEqual(sorted(items), ["tab", "parent", "other"])
+    }
+
+    func testSearchSiblingsWithEqualRelevanceTiebreakOnSlot() {
+        let items = [("tab2", family("wid-1", slot: 2)), ("tab1", family("wid-1", slot: 1)), ("parent", family("wid-1", slot: 0))]
+        XCTAssertEqual(sorted(items, searchActive: true), ["parent", "tab1", "tab2"])
+    }
 }
 
 final class ApplicationRepresentativeResolverTests: XCTestCase {

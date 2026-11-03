@@ -22,6 +22,9 @@ struct OrderWindow: Equatable {
     var matchingGroupRank = 0
     /// During a search with matching groups on: the one best match, drawn first outside any section.
     var isPinnedBestMatch = false
+    /// 0 for windows; a browser tab row's 1-based tab-strip slot. A tab row's `state` is its parent's, so a
+    /// window and its tab rows share `state.id`.
+    var browserTabSlot = 0
 }
 
 struct ApplicationRepresentativeCandidate: Equatable {
@@ -66,10 +69,13 @@ enum WindowOrderResolver {
             if a.isPinnedBestMatch != b.isPinnedBestMatch { return a.isPinnedBestMatch }
             if a.matchingGroupRank != b.matchingGroupRank { return a.matchingGroupRank < b.matchingGroupRank }
             if a.searchRelevance != b.searchRelevance { return a.searchRelevance > b.searchRelevance }
-            return a.state.lastFocusOrder < b.state.lastFocusOrder
+            if a.state.lastFocusOrder != b.state.lastFocusOrder { return a.state.lastFocusOrder < b.state.lastFocusOrder }
+            return a.browserTabSlot < b.browserTabSlot
         }
         // sections first, so the buckets below push windows to the end of their own section
         if a.matchingGroupRank != b.matchingGroupRank { return a.matchingGroupRank < b.matchingGroupRank }
+        // a window and its browser tab rows: the window, then its tabs in strip order
+        if a.state.id == b.state.id && a.browserTabSlot != b.browserTabSlot { return a.browserTabSlot < b.browserTabSlot }
         // separate buckets for these window types (pushed to the end)
         if windowlessAtEnd && a.state.isWindowlessApp != b.state.isWindowlessApp { return b.state.isWindowlessApp }
         if hiddenAtEnd && a.app.isHidden != b.app.isHidden { return b.app.isHidden }

@@ -3,10 +3,12 @@ import Foundation
 /// What a matching-group rule can test. `NSPredicate` reads these key paths through KVC on the dictionary,
 /// so the keys are the field names stored in `MatchingGroupRule.predicateFormat`.
 enum MatchingGroupFacts {
-    static let keys = ["title", "app", "bundleId"]
+    static let keys = ["title", "app", "bundleId", "url", "kind"]
 
-    static func of(_ s: WindowState, _ app: ApplicationState) -> [String: String] {
-        ["title": s.title, "app": app.localizedName ?? "", "bundleId": app.bundleIdentifier ?? ""]
+    /// `url` is a browser tab row's URL ("" for windows); `kind` is `"tab"` for a browser tab row, else `"window"`.
+    static func of(_ s: WindowState, _ app: ApplicationState, url: String? = nil, isBrowserTab: Bool = false) -> [String: String] {
+        ["title": s.title, "app": app.localizedName ?? "", "bundleId": app.bundleIdentifier ?? "",
+         "url": url ?? "", "kind": isBrowserTab ? "tab" : "window"]
     }
 }
 

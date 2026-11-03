@@ -87,3 +87,16 @@ then the pinned best match, then rank, then relevance.
 - **testAtTheEndBucketsApplyWithinAMatchingGroup** — a minimized window stays in its own section, at its end.
 - **testRankZeroEverywhereReproducesTodaysOrder** — with every rank at 0 the comparator answers as before.
 - **testSearchOrdersByMatchThenPinThenRankThenRelevance** — each key in turn decides.
+
+### I. Browser tab rows
+A browser tab row (`browser-tabs/`) is built with its parent window's `state` (`Windows.orderWindow`), so every
+bucket and sort key puts it exactly where its window is, and `OrderWindow.browserTabSlot` (0 for windows) keeps
+the family together: right after the matching-group rank check, two rows with the same `state.id` and different
+slots order by slot. Its search score and matching-group rank are its own, so a section can take a tab away
+from its window; within that section it still sorts by its window's position, then slot. With search, slot is
+the last tiebreak after `lastFocusOrder`, which siblings share.
+- **testBrowserTabRowSortsRightAfterItsParentInSlotOrderForEverySortType** — parent, then slots 1, 2, for
+  every sort type.
+- **testAtTheEndBucketMovesAMinimizedParentWithItsTabs** — "minimized at the end" moves the family together.
+- **testMatchingGroupRankSeparatesATabFromItsParent** — a tab in an earlier section sorts before its window.
+- **testSearchSiblingsWithEqualRelevanceTiebreakOnSlot** — equal relevance and focus order → slot.

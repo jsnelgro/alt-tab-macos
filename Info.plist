@@ -17,6 +17,8 @@
 	<string>en</string>
 	<key>CFBundleIconFile</key>
 	<string>app.png</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>AltTab reads your browser's tabs so it can list and switch to them.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>GPL-3.0 licence</string>
 	<key>LSApplicationCategoryType</key>

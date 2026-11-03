@@ -7,6 +7,25 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5EB7A5000000000000000102 /* BrowserFaviconPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000101 /* BrowserFaviconPicker.swift */; };
+		5EB7A5000000000000000103 /* BrowserFaviconPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000101 /* BrowserFaviconPicker.swift */; };
+		5EB7A5000000000000000106 /* BrowserFaviconPickerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000105 /* BrowserFaviconPickerTests.swift */; };
+		5EB7A5000000000000000108 /* BrowserFavicons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000107 /* BrowserFavicons.swift */; };
+		5EB7A5000000000000000002 /* BrowserTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000001 /* BrowserTab.swift */; };
+		5EB7A5000000000000000003 /* BrowserTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000001 /* BrowserTab.swift */; };
+		5EB7A5000000000000000005 /* BrowserDialect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000004 /* BrowserDialect.swift */; };
+		5EB7A5000000000000000007 /* BrowserTabReplyParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000006 /* BrowserTabReplyParser.swift */; };
+		5EB7A5000000000000000008 /* BrowserTabReplyParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000006 /* BrowserTabReplyParser.swift */; };
+		5EB7A5000000000000000011 /* BrowserTabReplyParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000010 /* BrowserTabReplyParserTests.swift */; };
+		5EB7A5000000000000000013 /* BrowserWindowMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000012 /* BrowserWindowMatcher.swift */; };
+		5EB7A5000000000000000014 /* BrowserWindowMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000012 /* BrowserWindowMatcher.swift */; };
+		5EB7A5000000000000000017 /* BrowserWindowMatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000016 /* BrowserWindowMatcherTests.swift */; };
+		5EB7A5000000000000000019 /* BrowserTabRowsDiff.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000018 /* BrowserTabRowsDiff.swift */; };
+		5EB7A5000000000000000020 /* BrowserTabRowsDiff.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000018 /* BrowserTabRowsDiff.swift */; };
+		5EB7A5000000000000000023 /* BrowserTabRowsDiffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000022 /* BrowserTabRowsDiffTests.swift */; };
+		5EB7A5000000000000000025 /* BrowserTabsReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000024 /* BrowserTabsReader.swift */; };
+		5EB7A5000000000000000027 /* BrowserTabs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000026 /* BrowserTabs.swift */; };
+		5EB7A5000000000000000029 /* BrowserTabsTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EB7A5000000000000000028 /* BrowserTabsTab.swift */; };
 		5EA7C4000000000000000002 /* MatchingGroupRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA7C4000000000000000001 /* MatchingGroupRule.swift */; };
 		5EA7C4000000000000000003 /* MatchingGroupRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA7C4000000000000000001 /* MatchingGroupRule.swift */; };
 		5EA7C4000000000000000006 /* MatchingGroupRuleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA7C4000000000000000005 /* MatchingGroupRuleTests.swift */; };
@@ -498,6 +517,24 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		5EB7A5000000000000000101 /* BrowserFaviconPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserFaviconPicker.swift; sourceTree = "<group>"; };
+		5EB7A5000000000000000104 /* BrowserFaviconPickerSpecs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BrowserFaviconPickerSpecs.md; sourceTree = "<group>"; };
+		5EB7A5000000000000000105 /* BrowserFaviconPickerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserFaviconPickerTests.swift; sourceTree = "<group>"; };
+		5EB7A5000000000000000107 /* BrowserFavicons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserFavicons.swift; sourceTree = "<group>"; };
+		5EB7A5000000000000000001 /* BrowserTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserTab.swift; sourceTree = "<group>"; };
+		5EB7A5000000000000000004 /* BrowserDialect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserDialect.swift; sourceTree = "<group>"; };
+		5EB7A5000000000000000006 /* BrowserTabReplyParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserTabReplyParser.swift; sourceTree = "<group>"; };
+		5EB7A5000000000000000009 /* BrowserTabReplyParserSpecs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BrowserTabReplyParserSpecs.md; sourceTree = "<group>"; };
+		5EB7A5000000000000000010 /* BrowserTabReplyParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserTabReplyParserTests.swift; sourceTree = "<group>"; };
+		5EB7A5000000000000000012 /* BrowserWindowMatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserWindowMatcher.swift; sourceTree = "<group>"; };
+		5EB7A5000000000000000015 /* BrowserWindowMatcherSpecs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BrowserWindowMatcherSpecs.md; sourceTree = "<group>"; };
+		5EB7A5000000000000000016 /* BrowserWindowMatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserWindowMatcherTests.swift; sourceTree = "<group>"; };
+		5EB7A5000000000000000018 /* BrowserTabRowsDiff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserTabRowsDiff.swift; sourceTree = "<group>"; };
+		5EB7A5000000000000000021 /* BrowserTabRowsDiffSpecs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BrowserTabRowsDiffSpecs.md; sourceTree = "<group>"; };
+		5EB7A5000000000000000022 /* BrowserTabRowsDiffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserTabRowsDiffTests.swift; sourceTree = "<group>"; };
+		5EB7A5000000000000000024 /* BrowserTabsReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserTabsReader.swift; sourceTree = "<group>"; };
+		5EB7A5000000000000000026 /* BrowserTabs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserTabs.swift; sourceTree = "<group>"; };
+		5EB7A5000000000000000028 /* BrowserTabsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserTabsTab.swift; sourceTree = "<group>"; };
 		5EA7C4000000000000000001 /* MatchingGroupRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchingGroupRule.swift; sourceTree = "<group>"; };
 		5EA7C4000000000000000004 /* MatchingGroupRuleSpecs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MatchingGroupRuleSpecs.md; sourceTree = "<group>"; };
 		5EA7C4000000000000000005 /* MatchingGroupRuleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchingGroupRuleTests.swift; sourceTree = "<group>"; };
@@ -975,6 +1012,30 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		5EB7A5000000000000000030 /* browser-tabs */ = {
+			isa = PBXGroup;
+			children = (
+				5EB7A5000000000000000101 /* BrowserFaviconPicker.swift */,
+				5EB7A5000000000000000104 /* BrowserFaviconPickerSpecs.md */,
+				5EB7A5000000000000000105 /* BrowserFaviconPickerTests.swift */,
+				5EB7A5000000000000000107 /* BrowserFavicons.swift */,
+				5EB7A5000000000000000001 /* BrowserTab.swift */,
+				5EB7A5000000000000000004 /* BrowserDialect.swift */,
+				5EB7A5000000000000000006 /* BrowserTabReplyParser.swift */,
+				5EB7A5000000000000000009 /* BrowserTabReplyParserSpecs.md */,
+				5EB7A5000000000000000010 /* BrowserTabReplyParserTests.swift */,
+				5EB7A5000000000000000012 /* BrowserWindowMatcher.swift */,
+				5EB7A5000000000000000015 /* BrowserWindowMatcherSpecs.md */,
+				5EB7A5000000000000000016 /* BrowserWindowMatcherTests.swift */,
+				5EB7A5000000000000000018 /* BrowserTabRowsDiff.swift */,
+				5EB7A5000000000000000021 /* BrowserTabRowsDiffSpecs.md */,
+				5EB7A5000000000000000022 /* BrowserTabRowsDiffTests.swift */,
+				5EB7A5000000000000000024 /* BrowserTabsReader.swift */,
+				5EB7A5000000000000000026 /* BrowserTabs.swift */,
+			);
+			path = "browser-tabs";
+			sourceTree = "<group>";
+		};
 		5EA7C4000000000000000019 /* matching-groups */ = {
 			isa = PBXGroup;
 			children = (
@@ -1402,6 +1463,7 @@
 				6853124817C5591C2802121F /* search-discovery */,
 				D04BA62E30174C336E4080FA /* main-window */,
 				5EA7C4000000000000000019 /* matching-groups */,
+				5EB7A5000000000000000030 /* browser-tabs */,
 				F00DCAFE0000000000000002 /* Search.swift */,
 				F00DCAFE0000000000000003 /* SearchTestable.swift */,
 				BF0CAAAA0000000000000001 /* SearchTests.swift */,
@@ -1580,6 +1642,7 @@
 			isa = PBXGroup;
 			children = (
 				5EA7C4000000000000000017 /* MatchingGroupsTab.swift */,
+				5EB7A5000000000000000028 /* BrowserTabsTab.swift */,
 				5F0A63062F82D99200AE4C38 /* UpgradeTab.swift */,
 				5F21C9DE2C6E93F10091F72F /* appearance */,
 				5F21C9DD2C6E93E60091F72F /* controls */,
@@ -2165,6 +2228,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				5EA7C4000000000000000003 /* MatchingGroupRule.swift in Sources */,
+				5EB7A5000000000000000103 /* BrowserFaviconPicker.swift in Sources */,
+				5EB7A5000000000000000106 /* BrowserFaviconPickerTests.swift in Sources */,
+				5EB7A5000000000000000003 /* BrowserTab.swift in Sources */,
+				5EB7A5000000000000000008 /* BrowserTabReplyParser.swift in Sources */,
+				5EB7A5000000000000000011 /* BrowserTabReplyParserTests.swift in Sources */,
+				5EB7A5000000000000000014 /* BrowserWindowMatcher.swift in Sources */,
+				5EB7A5000000000000000017 /* BrowserWindowMatcherTests.swift in Sources */,
+				5EB7A5000000000000000020 /* BrowserTabRowsDiff.swift in Sources */,
+				5EB7A5000000000000000023 /* BrowserTabRowsDiffTests.swift in Sources */,
 				5EA7C4000000000000000006 /* MatchingGroupRuleTests.swift in Sources */,
 				5EA7C4000000000000000009 /* MatchingGroupResolver.swift in Sources */,
 				5EA7C4000000000000000012 /* MatchingGroupResolverTests.swift in Sources */,
@@ -2345,6 +2417,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				5EA7C4000000000000000002 /* MatchingGroupRule.swift in Sources */,
+				5EB7A5000000000000000102 /* BrowserFaviconPicker.swift in Sources */,
+				5EB7A5000000000000000108 /* BrowserFavicons.swift in Sources */,
+				5EB7A5000000000000000002 /* BrowserTab.swift in Sources */,
+				5EB7A5000000000000000005 /* BrowserDialect.swift in Sources */,
+				5EB7A5000000000000000007 /* BrowserTabReplyParser.swift in Sources */,
+				5EB7A5000000000000000013 /* BrowserWindowMatcher.swift in Sources */,
+				5EB7A5000000000000000019 /* BrowserTabRowsDiff.swift in Sources */,
+				5EB7A5000000000000000025 /* BrowserTabsReader.swift in Sources */,
+				5EB7A5000000000000000027 /* BrowserTabs.swift in Sources */,
+				5EB7A5000000000000000029 /* BrowserTabsTab.swift in Sources */,
 				5EA7C4000000000000000008 /* MatchingGroupResolver.swift in Sources */,
 				5EA7C4000000000000000014 /* MatchingGroups.swift in Sources */,
 				5EA7C4000000000000000016 /* MatchingGroupHeaderView.swift in Sources */,

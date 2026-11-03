@@ -26,6 +26,9 @@ struct SelectionWindow: Equatable {
     /// list, but "the window you were on before" is a fact about the ungrouped order, so the default pick
     /// is judged there (see `initialPickIndex`).
     var ungroupedPosition: Int? = nil
+    /// A browser's background tab. They sit right after their window, so counting them would make a quick
+    /// press pick the current window's own tab instead of the previous window: the default pick skips them.
+    var isBrowserTabRow = false
 }
 
 /// Snapshot of everything the kernel needs to pick the next selection. No globals, no AppKit.
@@ -36,7 +39,7 @@ struct SelectionInputs: Equatable {
     /// True iff `Preferences.windowOrder[shortcutIndex] != .recentlyFocused`
     /// AND `Applications.frontmostPid != nil`. Gates the alpha/space-ordering initial-pick path.
     let useLastFocusedRule: Bool
-    /// How many windows were VISIBLE when the shortcut was pressed. Compared against the visible count now,
+    /// How many windows (browser tab rows excluded) were VISIBLE when the shortcut was pressed. Compared against the visible count now,
     /// it says how many of the newcomers actually lengthened the list — see `defaultPickIndexAsOfSummon`.
     let visibleCountAtSummon: Int
     /// True once the user moved the selection themselves. Until then `selectedTarget` is merely where the
@@ -155,7 +158,7 @@ enum SelectionResolver {
         if i.useLastFocusedRule, let idx = getLastFocusedOrderWindowIndex(i.list) {
             return idx
         }
-        let order = ungroupedOrder(i.list)
+        let order = ungroupedOrder(i.list).filter { !i.list[$0].isBrowserTabRow }
         return defaultPickIndex(order.map { i.list[$0] }, i).map { order[$0] }
     }
 
@@ -242,7 +245,7 @@ enum SelectionResolver {
         var bestIndex: Int? = nil
         var bestOrder = Int.max
         for (idx, w) in list.enumerated() {
-            if !w.isWindowlessApp && w.visible && w.lastFocusOrder < bestOrder {
+            if !w.isWindowlessApp && !w.isBrowserTabRow && w.visible && w.lastFocusOrder < bestOrder {
                 bestOrder = w.lastFocusOrder
                 bestIndex = idx
             }

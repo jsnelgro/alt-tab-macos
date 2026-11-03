@@ -926,7 +926,7 @@ class Applications {
         // `app` is captured explicitly: the throttled block deliberately holds it for up to 3s (see
         // above), so the scheduled block's `[weak app]` only starts mattering once this one is gone.
         tabAdoptThrottler.throttleOrProceed(key: "\(pid)") { [app] in
-            let appWindowCount = Windows.list.reduce(0) { $1.application.pid == pid ? $0 + 1 : $0 }
+            let appWindowCount = Windows.list.reduce(0) { $1.application.pid == pid && $1.browserTab == nil ? $0 + 1 : $0 }
             let situation = "\(untrackedTitles.sorted().joined(separator: "\u{1}"))|\(appWindowCount)"
             let previous = lastInactiveTabScan[pid]
             guard InactiveTabScanPolicy.shouldScan(recordedSituation: previous?.situation,
@@ -1107,7 +1107,7 @@ class Applications {
                 let semantic = SemanticSurface(title: newTitle, subrole: a.subrole, role: a.role, isMain: a.isMain)
                 guard Windows.reevaluateAdmission(window, semantic) else { return }
                 let changed = window.title != newTitle
-                if changed { window.title = newTitle; window.lastSearchQuery = nil }
+                if changed { window.title = newTitle; window.lastSearchQuery = nil; BrowserTabs.scheduleRefresh(app.pid) }
                 window.axTitleIsEmpty = a.title?.isEmpty ?? true
                 window.isMainWindow = a.isMain ?? false
                 TrackedWindowStateBridge.dispatch(.titleAndTabsRead(wid: wid, tabGroup: tabObservation,
@@ -1128,6 +1128,7 @@ class Applications {
             guard window.title != newTitle else { return }
             window.title = newTitle
             window.lastSearchQuery = nil
+            BrowserTabs.scheduleRefresh(window.application.pid)
             TrackedWindowStateBridge.dispatch(.titleAndTabsRead(wid: wid, tabGroup: .unknown,
                 reconcileTabs: false, changedSoFar: true))
         }
@@ -1231,6 +1232,7 @@ class Applications {
             // processIdentifier may already be -1; identity comparison keeps the tracked pid available for cleanup
             list.removeAll { $0.runningApplication.isEqual(tApp) }
         }
+        pidsToRemove.forEach { BrowserTabs.forget($0) }
         for pid in pidsToRemove {
             WindowSurfaceInventory.remove(pid: pid)
             AxObserverRegistry.shared.processExited(pid, generation: AttentionEngine.generation(of: pid))

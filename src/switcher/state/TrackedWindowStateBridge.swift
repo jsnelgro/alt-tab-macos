@@ -99,7 +99,8 @@ class TrackedWindowStateBridge {
     /// the `Spaces` topology, the frontmost pid.
     static func snapshot() -> TrackedWindowState {
         var state = TrackedWindowState()
-        state.windows = Windows.list.map { modelWindow($0) }
+        // browser tab rows are display-only: the reducer never sees them (`Window.browserTab`)
+        state.windows = Windows.list.compactMap { $0.browserTab == nil ? modelWindow($0) : nil }
         // `isActive` is DERIVED, never read off `NSRunningApplication`. Its getter is a full LaunchServices
         // dynamic-property refresh (mach round trip + sysctl + CFString building, allocating throughout), and
         // this loop ran one per app on EVERY dispatch, and a title/tab refresh dispatches once per window,
@@ -161,6 +162,7 @@ class TrackedWindowStateBridge {
             return byId?[mw.id]
         }
         for mw in state.windows {
+            assert(!mw.id.hasPrefix("btab-"), "a browser tab row reached the reducer: \(mw.id)")
             guard let w = liveWindow(mw) else { continue }
             w.adopt(mw)
         }
