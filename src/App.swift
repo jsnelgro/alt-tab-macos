@@ -477,6 +477,8 @@ class App: AppCenterApplication {
         KeyRepeatTimer.startRepeatingKeyNextWindow()
         let prioritizedIds = TilesView.windowIdsInViewport()
         WindowThumbnails.refreshAsync(Windows.list, .refreshOnlyThumbnailsAfterShowUi, prioritizedIds: prioritizedIds)
+        // drawn from the last known tabs; a fresh read corrects the rows in place when it lands
+        BrowserTabs.refreshAll()
         #if DEBUG
         let shownSession = SwitcherSession.current
         // CoreAnimation cannot commit the first frame until this main-runloop turn ends.

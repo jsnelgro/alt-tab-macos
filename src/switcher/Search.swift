@@ -30,7 +30,10 @@ final class Search {
         window.swTitleMatchSpan = titleResult?.span
         let appScore = Double(appResult?.score ?? 0)
         let titleScore = Double(titleResult?.score ?? 0)
-        window.swBestSimilarity = max(appScore * 1.02, titleScore)
+        // a browser tab row also matches its URL's host, so "github" finds a GitHub tab not titled so
+        let host = window.browserTab.flatMap { URL(string: $0.tab.url)?.host } ?? ""
+        let hostScore = host.isEmpty ? 0 : Double(SearchTestable.tierMatch(query: originalQuery, text: host)?.score ?? 0)
+        window.swBestSimilarity = max(appScore * 1.02, titleScore, hostScore)
         window.lastSearchQuery = cacheKey
     }
 }

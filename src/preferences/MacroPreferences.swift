@@ -180,6 +180,18 @@ enum MatchingGroupsPreference: CaseIterable, MacroPreference {
     }
 }
 
+enum BrowserTabsPreference: CaseIterable, MacroPreference {
+    case hide
+    case show
+
+    var localizedString: LocalizedString {
+        switch self {
+            case .hide: return "Hide"
+            case .show: return "Show"
+        }
+    }
+}
+
 enum AppsToShowPreference: CaseIterable, MacroPreference {
     case all
     case active

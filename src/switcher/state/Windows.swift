@@ -118,18 +118,31 @@ class Windows {
         // Tab grouping (incl. fullscreen siblings) and active→inactive state mirroring are reconciled
         // reactively on WindowServer events (TabGroup.reconcile), so the model is already grouped here —
         // doing it in this synchronous show path would reorder tiles mid-render (UI jump).
-        for window in list {
+        for window in list where window.browserTab == nil {
             window.shouldShowTheUser = shouldShowTheUser(window, filters)
         }
         refreshWhichWindowsToShowTheUser()
+        updateBrowserTabRowsVisibility()
         sort()
         return true
+    }
+
+    /// A tab row skips the filters: it is shown exactly when its window is, and the shortcut lists tabs. One
+    /// window per app means one row per app, so no tab rows then.
+    private static func updateBrowserTabRowsVisibility() {
+        let shortcutIndex = SwitcherSession.current?.shortcutIndex ?? 0
+        let tabsShown = Preferences.browserTabs(shortcutIndex) == .show && !Preferences.showsOneWindowPerApp()
+        for row in list where row.browserTab != nil {
+            let parent = BrowserTabs.parent(of: row)
+            if let parent { row.mirrorParentDisplayFacts(parent) }
+            row.shouldShowTheUser = tabsShown && (parent?.shouldShowTheUser ?? false)
+        }
     }
 
     static func refreshWhichWindowsToShowTheUser() {
         guard Preferences.showsOneWindowPerApp() else { return }
         let current = AttentionEngine.currentUserContext
-        for (pid, windows) in Dictionary(grouping: list, by: { $0.application.pid }) {
+        for (pid, windows) in Dictionary(grouping: list.filter { $0.browserTab == nil }, by: { $0.application.pid }) {
             let eligible = windows.filter { $0.shouldShowTheUser }
             let currentWid = current.pid == pid ? current.wid : nil
             let lastAttendedWid = AttentionEngine.lastAttendedWindow(pid)
@@ -273,7 +286,7 @@ class Windows {
     /// press, so no event can land in between and shift the count.
     private static func selectionInputs(_ session: SwitcherSession) -> SelectionInputs {
         let snapshot = selectionSnapshot()
-        let visibleCountAtSummon = session.visibleWindowCountAtSummon ?? snapshot.filter { $0.visible }.count
+        let visibleCountAtSummon = session.visibleWindowCountAtSummon ?? snapshot.filter { $0.visible && !$0.isBrowserTabRow }.count
         session.visibleWindowCountAtSummon = visibleCountAtSummon
         return SelectionInputs(
             list: snapshot,
@@ -309,7 +322,7 @@ class Windows {
 
     private static func currentWindowDrawEvidence(_ pid: pid_t) -> CurrentWindowDrawEvidence {
         .application(list.compactMap {
-            $0.application.pid == pid
+            $0.application.pid == pid && $0.browserTab == nil
                 ? FrontmostAppWindow(visible: shouldDisplay($0), isWindowlessApp: $0.isWindowlessApp,
                     isPhantom: $0.isPhantom, isMinimized: $0.isMinimized)
                 : nil
@@ -327,7 +340,8 @@ class Windows {
                             isMinimized: $0.isMinimized,
                             isWindowlessApp: $0.isWindowlessApp,
                             appearedAfterSummon: !(presentAtSummon?.contains($0.id) ?? true),
-                            ungroupedPosition: $0.ungroupedPosition)
+                            ungroupedPosition: $0.ungroupedPosition,
+                            isBrowserTabRow: $0.browserTab != nil)
         }
     }
 
@@ -571,16 +585,20 @@ class Windows {
             && !MatchingGroups.compiled.isEmpty
     }
 
+    /// A tab row sorts with its parent's facts, so every bucket and sort key puts it where its window is, and
+    /// `browserTabSlot` orders the family. Its search score and matching-group facts are its own.
     private static func orderWindow(_ window: Window, _ query: String, _ searchActive: Bool, _ groupingActive: Bool) -> OrderWindow {
         let state = window.state
         let app = window.application.state
         var orderWindow = OrderWindow(
-            state: state,
+            state: BrowserTabs.parent(of: window)?.state ?? state,
             app: app,
             searchMatches: searchActive ? Search.matches(window, query: query) : false,
             searchRelevance: searchActive ? Search.relevance(for: window, query: query) : 0)
+        orderWindow.browserTabSlot = window.browserTab?.slot ?? 0
         if groupingActive {
-            orderWindow.matchingGroupRank = MatchingGroupResolver.rank(MatchingGroupFacts.of(state, app), predicates: MatchingGroups.predicates)
+            let facts = MatchingGroupFacts.of(state, app, url: window.browserTab?.tab.url, isBrowserTab: window.browserTab != nil)
+            orderWindow.matchingGroupRank = MatchingGroupResolver.rank(facts, predicates: MatchingGroups.predicates)
         }
         return orderWindow
     }
@@ -820,9 +838,11 @@ class Windows {
         appWindowSetVersion[pid] = nil
     }
 
+    /// Tab rows hold no MRU rank, so they don't count towards the next one.
     static func appendWindow(_ window: Window) {
-        window.lastFocusOrder = list.count
+        window.lastFocusOrder = list.count { $0.browserTab == nil }
         list.append(window)
+        BrowserTabs.scheduleRefresh(window.application.pid)
         bumpAppWindowSetVersion(window.application.pid)
         if let wid = window.cgWindowId {
             byWindowId[wid] = window
@@ -887,7 +907,13 @@ class Windows {
         Logger.debug { "surface continuity #\(retirement.oldWid)→#\(newWid) pid=\(retirement.pid)" }
     }
 
-    static func removeWindows(_ windows: [Window], _ addWindowlessWindowIfNeeded: Bool) {
+    /// Browser tab rows passed in are dropped as display rows, outside the model bookkeeping below. A removed
+    /// window takes its own tab rows with it.
+    static func removeWindows(_ windowsAndRows: [Window], _ addWindowlessWindowIfNeeded: Bool) {
+        removeBrowserTabRows(windowsAndRows.filter { $0.browserTab != nil })
+        let windows = windowsAndRows.filter { $0.browserTab == nil }
+        let removedWids = Set(windows.compactMap { $0.cgWindowId })
+        removeBrowserTabRows(list.filter { $0.browserTab.map { removedWids.contains($0.parentWid) } ?? false })
         // Release any pooled TileView pinned to a window we're removing so its thumbnail
         // IOSurface can deallocate now. Otherwise the layer.contents reference keeps the
         // IOSurface alive until the next switcher show — which may be much later, and
@@ -925,6 +951,7 @@ class Windows {
         }
         let toRemove = windows.map { $0.lastFocusOrder }
         list.removeAll { w in
+            guard w.browserTab == nil else { return false }
             if toRemove.contains(w.lastFocusOrder) {
                 return true
             }
@@ -942,6 +969,9 @@ class Windows {
                     WindowCaptureScreenshots.cachedSCWindows.withLock { $0.removeAll { removedWids.contains($0.windowID) } }
                 }
             }
+        }
+        for pid in Set(windows.map { $0.application.pid }) {
+            BrowserTabs.scheduleRefresh(pid)
         }
         for w in windows {
             bumpAppWindowSetVersion(w.application.pid)
@@ -963,6 +993,20 @@ class Windows {
             windows.forEach { $0.application.addWindowlessWindowIfNeeded() }
         }
         App.refreshOpenUiAfterExternalEvent([], windowRemoved: true)
+    }
+
+    /// The only way tab rows leave the list: by identity, with no MRU shift (they hold no rank). Pooled tiles
+    /// drawing them let go of them, as `removeWindows` does for windows.
+    static func removeBrowserTabRows(_ rows: [Window]) {
+        guard !rows.isEmpty else { return }
+        let ids = Set(rows.map { ObjectIdentifier($0) })
+        for view in TilesView.recycledViews {
+            if let w = view.window_, ids.contains(ObjectIdentifier(w)) {
+                view.appIcon.releaseImage()
+                view.window_ = nil
+            }
+        }
+        list.removeAll { ids.contains(ObjectIdentifier($0)) }
     }
 }
 

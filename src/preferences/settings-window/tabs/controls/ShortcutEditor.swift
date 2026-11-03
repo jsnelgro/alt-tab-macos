@@ -359,10 +359,11 @@ final class OrderingPane {
     private static let labelGroupTabs = NSLocalizedString("Group tabs", comment: "")
     private static let labelWindowOrder = NSLocalizedString("Order windows by", comment: "")
     private static let labelMatchingGroups = "Matching groups"
+    private static let labelBrowserTabs = "Browser tabs"
 
     /// See `FilteringPane.searchableStrings`.
     static let searchableStrings: [String] = [
-        labelGroupApps, labelGroupTabs, labelWindowOrder, labelMatchingGroups,
+        labelGroupApps, labelGroupTabs, labelWindowOrder, labelMatchingGroups, labelBrowserTabs,
     ] + GroupAppsPreference.allCases.map { $0.localizedString }
       + GroupTabsPreference.allCases.map { $0.localizedString }
       + WindowOrderPreference.allCases.map { $0.localizedString }
@@ -372,18 +373,21 @@ final class OrderingPane {
     private let showTabsAsWindows: ShortcutBoundDropdown
     private let windowOrder: ShortcutBoundDropdown
     private let matchingGroups: ShortcutBoundDropdown
+    private let browserTabs: ShortcutBoundDropdown
 
     init(width: CGFloat) {
         showAppsOrWindows = ShortcutBoundDropdown(baseName: "showAppsOrWindows", cases: GroupAppsPreference.allCases)
         showTabsAsWindows = ShortcutBoundDropdown(baseName: "showTabsAsWindows", cases: GroupTabsPreference.allCases)
         windowOrder = ShortcutBoundDropdown(baseName: "windowOrder", cases: WindowOrderPreference.allCases)
         matchingGroups = ShortcutBoundDropdown(baseName: "matchingGroupsEnabled", cases: MatchingGroupsPreference.allCases)
+        browserTabs = ShortcutBoundDropdown(baseName: "browserTabs", cases: BrowserTabsPreference.allCases)
 
         let table = TableGroupView(width: width)
         table.addRow(TableGroupView.Row(leftTitle: Self.labelGroupApps, rightViews: [showAppsOrWindows]))
         table.addRow(TableGroupView.Row(leftTitle: Self.labelGroupTabs, rightViews: [showTabsAsWindows]))
         table.addRow(TableGroupView.Row(leftTitle: Self.labelWindowOrder, rightViews: [windowOrder]))
         table.addRow(TableGroupView.Row(leftTitle: Self.labelMatchingGroups, rightViews: [matchingGroups]))
+        table.addRow(TableGroupView.Row(leftTitle: Self.labelBrowserTabs, rightViews: [browserTabs]))
         view = table
     }
 
@@ -392,6 +396,7 @@ final class OrderingPane {
         showTabsAsWindows.bind(toShortcut: index)
         windowOrder.bind(toShortcut: index)
         matchingGroups.bind(toShortcut: index)
+        browserTabs.bind(toShortcut: index)
     }
 }
 

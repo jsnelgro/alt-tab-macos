@@ -253,3 +253,17 @@ fills `SelectionWindow.ungroupedPosition` while matching groups are on, and the 
 order then mapped back to a list index. The last-focused rule (non-MRU window orders) is unchanged.
 - **testInitialPickInAGroupedListLandsOnThePreviousWindow** — the previous window sits in the second section;
   the default selection still lands on it.
+
+### I. Browser tab rows
+A browser's background tabs are rows right after their window (`browser-tabs/`), so "the second visible row"
+would be the current window's own tab and a quick press would switch tabs instead of windows. The shell sets
+`SelectionWindow.isBrowserTabRow`; the default pick runs over the other rows only, then maps back to a list
+index (like `ungroupedOrder`). `visibleCountAtSummon` counts non-tab rows, so tab rows landing after the summon
+never lengthen the list as newcomers. The last-focused rule skips them too. Cycling and search land on them
+like any row.
+- **testInitialPickSkipsTheCurrentWindowsBrowserTabs** — tabs between the current and previous window are
+  stepped over.
+- **testBrowserTabRowsAppearingAfterSummonDontMoveTheDefaultPick** — a tab row read after the summon doesn't
+  push the pick along.
+- **testLastFocusedRuleSkipsBrowserTabRows** — the last-focused rule never picks a tab row.
+- **testCyclingOntoABrowserTabRowKeepsIt** — a tab row the user picked is followed like any target.

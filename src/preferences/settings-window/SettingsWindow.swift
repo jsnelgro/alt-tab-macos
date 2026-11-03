@@ -583,6 +583,7 @@ class SettingsWindow: NSWindow {
             SettingsSectionDefinition(id: "general", title: NSLocalizedString("General", comment: ""), symbol: .gearshape, builder: GeneralTab.initTab, registerDynamicSearchContent: nil),
             SettingsSectionDefinition(id: "exceptions", title: NSLocalizedString("Exceptions", comment: ""), symbol: .handRaised, builder: ExceptionsTab.initTab, registerDynamicSearchContent: ExceptionsTab.registerSidebarRowsSearchContent),
             SettingsSectionDefinition(id: "matchingGroups", title: "Groups", symbol: .arrowTriangleBranch, builder: MatchingGroupsTab.initTab, registerDynamicSearchContent: nil),
+            SettingsSectionDefinition(id: "browserTabs", title: "Browser tabs", symbol: .link, builder: BrowserTabsTab.initTab, registerDynamicSearchContent: nil),
         ]
     }
 
@@ -1279,6 +1280,7 @@ extension SettingsWindow: NSWindowDelegate {
             GeneralTab.cleanup()
             ExceptionsTab.cleanup()
             MatchingGroupsTab.cleanup()
+            BrowserTabsTab.cleanup()
             UpgradeTab.cleanup()
             SettingsWindow.shared = nil
         }
@@ -1355,6 +1357,7 @@ extension SettingsWindow {
         GeneralTab.cleanup()
         ExceptionsTab.cleanup()
         MatchingGroupsTab.cleanup()
+        BrowserTabsTab.cleanup()
         UpgradeTab.cleanup()
         shared = nil
     }

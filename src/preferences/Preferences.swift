@@ -66,6 +66,7 @@ class Preferences {
             values[indexToName("showAppsOrWindows", index)] = GroupAppsPreference.allWindows.indexAsString
             values[indexToName("showTabsAsWindows", index)] = GroupTabsPreference.singleWindow.indexAsString
             values[indexToName("matchingGroupsEnabled", index)] = MatchingGroupsPreference.off.indexAsString
+            values[indexToName("browserTabs", index)] = BrowserTabsPreference.hide.indexAsString
             // Override defaults are the FREE-tier value for Pro-gated prefs (so `snapshotAndDowngrade`
             // is a no-op for unset overrides), and the global default for non-gated prefs.
             // `hasOverride(_:_:)` consults `persistentDomain` so registered defaults don't make
@@ -152,6 +153,7 @@ class Preferences {
     static func groupApps(_ i: Int) -> GroupAppsPreference { CachedUserDefaults.macroPref(indexToName("showAppsOrWindows", i), GroupAppsPreference.allCases) }
     static func groupTabs(_ i: Int) -> GroupTabsPreference { CachedUserDefaults.macroPref(indexToName("showTabsAsWindows", i), GroupTabsPreference.allCases) }
     static func matchingGroupsEnabled(_ i: Int) -> MatchingGroupsPreference { CachedUserDefaults.macroPref(indexToName("matchingGroupsEnabled", i), MatchingGroupsPreference.allCases) }
+    static func browserTabs(_ i: Int) -> BrowserTabsPreference { CachedUserDefaults.macroPref(indexToName("browserTabs", i), BrowserTabsPreference.allCases) }
     static var shortcutStyle: ShortcutStylePreference { ProGatedPreferences.shortcutStyle.read() }
     static var menubarIcon: MenubarIconPreference { CachedUserDefaults.macroPref("menubarIcon", MenubarIconPreference.allCases) }
     static var menubarIconShown: Bool { CachedUserDefaults.bool("menubarIconShown") }

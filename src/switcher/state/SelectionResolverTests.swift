@@ -718,4 +718,42 @@ final class SelectionResolverTests: XCTestCase {
         let i = inputs(list: [current, other, prev], userPickedSelection: false)
         XCTAssertEqual(SelectionResolver.decide(i), .resetThenSelect(2))
     }
+
+    // MARK: - I. Browser tab rows
+
+    private func tabRow(_ id: String, appearedAfterSummon: Bool = false) -> SelectionWindow {
+        var row = w(id, focusOrder: Int.max, appearedAfterSummon: appearedAfterSummon)
+        row.isBrowserTabRow = true
+        return row
+    }
+
+    /// I1. The current window's tabs sit between it and the previous window; a quick press still lands on
+    /// the previous window.
+    func testInitialPickSkipsTheCurrentWindowsBrowserTabs() {
+        let list = [w("current", focusOrder: 0), tabRow("t1"), tabRow("t2"), w("prev", focusOrder: 1)]
+        let i = inputs(list: list, userPickedSelection: false, visibleCountAtSummon: 2)
+        XCTAssertEqual(SelectionResolver.decide(i), .resetThenSelect(3))
+    }
+
+    /// I2. Tab rows that land after the summon (a re-read) are not newcomers that lengthen the list.
+    func testBrowserTabRowsAppearingAfterSummonDontMoveTheDefaultPick() {
+        let list = [w("current", focusOrder: 0), tabRow("t1", appearedAfterSummon: true), w("prev", focusOrder: 1),
+                    w("older", focusOrder: 2)]
+        let i = inputs(list: list, userPickedSelection: false, visibleCountAtSummon: 3)
+        XCTAssertEqual(SelectionResolver.decide(i), .resetThenSelect(2))
+    }
+
+    /// I3. The last-focused rule never lands on a tab row either.
+    func testLastFocusedRuleSkipsBrowserTabRows() {
+        let list = [tabRow("t1"), w("b", focusOrder: 1), w("a", focusOrder: 0)]
+        let i = inputs(list: list, useLastFocusedRule: true, userPickedSelection: false)
+        XCTAssertEqual(SelectionResolver.decide(i), .resetThenSelect(2))
+    }
+
+    /// I4. Once the user cycles onto a tab row it is followed like any target.
+    func testCyclingOntoABrowserTabRowKeepsIt() {
+        let list = [w("current", focusOrder: 0), tabRow("t1"), w("prev", focusOrder: 1)]
+        let i = inputs(list: list, selectedIndex: 1, selectedTarget: "t1")
+        XCTAssertEqual(SelectionResolver.decide(i), .selectAt(1))
+    }
 }

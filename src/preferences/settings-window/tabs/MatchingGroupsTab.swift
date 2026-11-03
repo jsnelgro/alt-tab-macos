@@ -327,7 +327,7 @@ class MatchingGroupsTab: NSObject {
 
     /// The field popup shows key paths ("bundleId") by default; the items keep their expression, only the title changes.
     private static func labelFields(_ template: NSPredicateEditorRowTemplate, valueWidth: CGFloat) {
-        let titles = ["title": "Title", "app": "App name", "bundleId": "Bundle ID"]
+        let titles = ["title": "Title", "app": "App name", "bundleId": "Bundle ID", "url": "Tab URL", "kind": "Kind (window/tab)"]
         if let fields = template.templateViews.first as? NSPopUpButton {
             for item in fields.itemArray {
                 guard let keyPath = (item.representedObject as? NSExpression)?.keyPath else { continue }
@@ -368,9 +368,10 @@ class MatchingGroupsTab: NSObject {
 
     private func refreshStatus(_ predicate: NSPredicate?) {
         let count = predicate.map { p in
-            Windows.list.filter { $0.shouldShowTheUser && p.evaluate(with: MatchingGroupFacts.of($0.state, $0.application.state)) }.count
+            Windows.list.filter { $0.shouldShowTheUser && p.evaluate(with: MatchingGroupFacts.of($0.state, $0.application.state,
+                url: $0.browserTab?.tab.url, isBrowserTab: $0.browserTab != nil)) }.count
         } ?? 0
-        statusLabel.stringValue = "Matches \(count) open window\(count == 1 ? "" : "s")"
+        statusLabel.stringValue = "Matches \(count) open window\(count == 1 ? "" : "s") or tab\(count == 1 ? "" : "s")"
     }
 
     private func update(_ change: (inout MatchingGroupRule) -> Void) {
