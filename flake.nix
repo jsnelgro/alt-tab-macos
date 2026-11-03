@@ -27,6 +27,8 @@
           export HOME=$TMPDIR CFFIXED_USER_HOME=$TMPDIR
           # The nixbld user can't reach the login keychain's "Local Self-Signed" identity, so sign
           # ad-hoc. The signature then changes with every build, which resets TCC grants.
+          # The versions normally come from the gitignored config/local.xcconfig, which isn't in the
+          # flake source; without them Info.plist lacks CFBundleVersion and App.version crashes at launch.
           xcodebuild \
             -project alt-tab-macos.xcodeproj \
             -scheme Debug \
@@ -36,7 +38,9 @@
             -clonedSourcePackagesDirPath "$TMPDIR/spm-packages" \
             CODE_SIGN_IDENTITY=- \
             CODE_SIGN_STYLE=Manual \
-            DEVELOPMENT_TEAM=
+            DEVELOPMENT_TEAM= \
+            CURRENT_PROJECT_VERSION=1 \
+            MARKETING_VERSION=1.0
           runHook postBuild
         '';
         installPhase = ''
