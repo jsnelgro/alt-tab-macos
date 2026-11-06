@@ -15,8 +15,9 @@ Rules, each a pass over the script windows still unmatched:
 3. Title equal (same prefix rule).
 
 A pair is taken only when it is unique both ways: exactly one free tracked window fits the script window, and
-no other unmatched script window fits that tracked window. Otherwise the script window stays unmatched and its
-tabs aren't listed: a wrong pair would switch the wrong window's tab.
+no other unmatched script window fits that tracked window. Otherwise the script window stays unmatched: a wrong
+pair would focus the wrong window. An unmatched window's tabs are still listed (see `BrowserTabRowsDiffSpecs.md`);
+the match only decides where they sit and which window AltTab focuses.
 
 ## Behavior & edge cases
 

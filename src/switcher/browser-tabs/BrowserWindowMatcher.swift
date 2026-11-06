@@ -3,8 +3,8 @@ import CoreGraphics
 /// Pairs a browser's script windows with the windows AltTab tracks for the same pid. Chromium's window id is
 /// its own internal number, not a `CGWindowID`, so the pairing goes by frame and title. Pure kernel.
 ///
-/// A wrong pair would switch the wrong window's tab, so anything ambiguous stays unmatched and its tabs
-/// aren't listed. Each rule is a pass over the script windows still unmatched, and each tracked window is
+/// A wrong pair would focus the wrong window, so anything ambiguous stays unmatched. Its tabs are still listed,
+/// placed after the browser's windows. Each rule is a pass over the script windows still unmatched, and each tracked window is
 /// used at most once.
 enum BrowserWindowMatcher {
     struct Tracked: Equatable {

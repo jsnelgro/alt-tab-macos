@@ -20,8 +20,21 @@ enum BrowserTabs {
         (0...Preferences.maxShortcutCount).contains { Preferences.browserTabs($0) == .show }
     }
 
+    /// The row's own window, when `BrowserWindowMatcher` paired it. Only this one is ever focused or acted on.
     static func parent(of row: Window) -> Window? {
-        row.browserTab.flatMap { Windows.byWindowId[$0.parentWid] }
+        row.browserTab?.parentWid.flatMap { Windows.byWindowId[$0] }
+    }
+
+    /// The window a row is shown and sorted with: its parent, else the browser's least recently used shown
+    /// window, so an unmatched row is listed after the browser's windows instead of being dropped.
+    static func anchor(of row: Window) -> Window? {
+        parent(of: row) ?? fallbackAnchor(row.application.pid)
+    }
+
+    private static func fallbackAnchor(_ pid: pid_t) -> Window? {
+        let own = Windows.list.filter { $0.application.pid == pid && $0.browserTab == nil && !$0.isWindowlessApp }
+        let byAge: (Window, Window) -> Bool = { $0.lastFocusOrder < $1.lastFocusOrder }
+        return own.filter { $0.shouldShowTheUser }.max(by: byAge) ?? own.max(by: byAge)
     }
 
     /// Read every running supported browser. Called after the summon's first render.
@@ -65,7 +78,9 @@ enum BrowserTabs {
 
     static func apply(_ snapshot: BrowserSnapshot) {
         guard isEnabled, Applications.list.contains(where: { $0.pid == snapshot.pid }) else { return }
-        let refs = BrowserTabRowsDiff.wantedRefs(snapshot, matches: BrowserWindowMatcher.match(snapshot.windows, trackedWindows(snapshot.pid)))
+        let matches = BrowserWindowMatcher.match(snapshot.windows, trackedWindows(snapshot.pid))
+        Logger.debug { "browserTabs matched \(matches.count)/\(snapshot.windows.count) windows of pid \(snapshot.pid)" }
+        let refs = BrowserTabRowsDiff.wantedRefs(snapshot, matches: matches)
         var wanted = [String: BrowserTabRef]()
         var wantedIds = [String]()
         for ref in refs {
@@ -79,7 +94,7 @@ enum BrowserTabs {
         let updated = update(existing, wanted)
         let removed = Set(result.remove)
         Windows.removeBrowserTabRows(existing.filter { removed.contains($0.id) })
-        let inserted = insert(result.insert.compactMap { wanted[$0] })
+        let inserted = insert(snapshot.pid, result.insert.compactMap { wanted[$0] })
         requestFavicons(snapshot.pid)
         guard updated || !removed.isEmpty || inserted else { return }
         App.refreshOpenUiAfterExternalEvent([])
@@ -113,8 +128,11 @@ enum BrowserTabs {
         return changed
     }
 
-    private static func insert(_ refs: [BrowserTabRef]) -> Bool {
-        let rows = refs.compactMap { ref in Windows.byWindowId[ref.parentWid].map { Window(browserTab: ref, parent: $0) } }
+    private static func insert(_ pid: pid_t, _ refs: [BrowserTabRef]) -> Bool {
+        let rows = refs.compactMap { ref -> Window? in
+            guard let anchor = ref.parentWid.flatMap({ Windows.byWindowId[$0] }) ?? fallbackAnchor(pid) else { return nil }
+            return Window(browserTab: ref, anchor: anchor)
+        }
         guard !rows.isEmpty else { return false }
         Windows.list.append(contentsOf: rows)
         TilesView.growPoolToCoverWindows()
@@ -141,10 +159,11 @@ enum BrowserTabs {
 
     /// Switches the browser to the tab, then runs `then` on main whether that worked or not, so a failed switch
     /// (the tab was closed meanwhile) still brings the window forward. A failure re-reads the browser.
-    static func activate(_ ref: BrowserTabRef, pid: pid_t, then: @escaping () -> Void) {
+    /// `raiseWindow` has the script bring the tab's window forward too, for a row with no parent to focus.
+    static func activate(_ ref: BrowserTabRef, pid: pid_t, raiseWindow: Bool, then: @escaping () -> Void) {
         guard let browser = browser(pid) else { return then() }
         BrowserTabsReader.queue.async {
-            let ok = BrowserTabsReader.act("activateTab", browser, ref)
+            let ok = BrowserTabsReader.act("activateTab", browser, ref, raiseWindow: raiseWindow)
             DispatchQueue.main.async {
                 then()
                 refresh(pid)

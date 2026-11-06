@@ -44,9 +44,10 @@ enum BrowserTabsReader {
     }
 
     /// Switches (`activateTab`) or closes (`closeTab`) one tab. Returns whether the handler succeeded.
-    static func act(_ handler: String, _ browser: SupportedBrowser, _ ref: BrowserTabRef) -> Bool {
+    static func act(_ handler: String, _ browser: SupportedBrowser, _ ref: BrowserTabRef, raiseWindow: Bool = false) -> Bool {
         let args = [NSAppleEventDescriptor(string: ref.scriptWindowId), NSAppleEventDescriptor(string: ref.tab.key),
-                    NSAppleEventDescriptor(int32: Int32(ref.stripIndex)), NSAppleEventDescriptor(string: ref.tab.url)]
+                    NSAppleEventDescriptor(int32: Int32(ref.stripIndex)), NSAppleEventDescriptor(string: ref.tab.url),
+                    NSAppleEventDescriptor(boolean: raiseWindow)]
         return call(browser, handler, args) != nil
     }
 

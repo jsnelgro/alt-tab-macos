@@ -152,19 +152,20 @@ class Window {
     }
 
     /// A row for one of a browser window's background tabs. Skips everything model-side the other inits do
-    /// (windowless placeholder removal, AX element, focus check): the parent window already did that.
-    /// `lastFocusOrder` is `Int.max` so it never collides with a real MRU rank; it sorts by its parent's.
-    init(browserTab ref: BrowserTabRef, parent: Window) {
-        tracked = TrackedWindow(id: BrowserTabRowsDiff.rowId(pid: parent.application.pid, ref), wid: nil,
-            pid: parent.application.pid, spaceIds: parent.spaceIds, spaceIndexes: parent.spaceIndexes)
+    /// (windowless placeholder removal, AX element, focus check): the anchor window already did that.
+    /// `lastFocusOrder` is `Int.max` so it never collides with a real MRU rank; it sorts by its anchor's
+    /// (`BrowserTabs.anchor`).
+    init(browserTab ref: BrowserTabRef, anchor: Window) {
+        tracked = TrackedWindow(id: BrowserTabRowsDiff.rowId(pid: anchor.application.pid, ref), wid: nil,
+            pid: anchor.application.pid, spaceIds: anchor.spaceIds, spaceIndexes: anchor.spaceIndexes)
         admissionEvidence = .discovery
         semanticSurface = nil
-        application = parent.application
+        application = anchor.application
         browserTab = ref
         self.lastFocusOrder = Int.max
-        self.creationOrder = parent.creationOrder
+        self.creationOrder = anchor.creationOrder
         updateBrowserTab(ref)
-        debugId = "\(application.debugId) (browserTab:\(ref.tab.key) parent:\(ref.parentWid))"
+        debugId = "\(application.debugId) (browserTab:\(ref.tab.key) parent:\(ref.parentWid.map { "\($0)" } ?? "unmatched"))"
         application.fetchAppIcon()
     }
 
@@ -174,8 +175,8 @@ class Window {
         lastSearchQuery = nil
     }
 
-    /// Display facts copied from the parent so the row's status icons and Space label match its window's.
-    func mirrorParentDisplayFacts(_ parent: Window) {
+    /// Display facts copied from the anchor so the row's status icons and Space label match its window's.
+    func mirrorAnchorDisplayFacts(_ parent: Window) {
         self.spaceIds = parent.spaceIds
         self.spaceIndexes = parent.spaceIndexes
         self.isOnAllSpaces = parent.isOnAllSpaces
@@ -413,8 +414,18 @@ class Window {
         if let browserTab {
             // The tab switch goes first so the window comes forward already showing it.
             // `TilesPanel.orderOutOnceFronted` keeps the panel up until the parent is fronted.
-            guard let parent = BrowserTabs.parent(of: self) else { return NSSound.beep() }
-            BrowserTabs.activate(browserTab, pid: application.pid) { parent.focus(onFronted) }
+            if let parent = BrowserTabs.parent(of: self) {
+                BrowserTabs.activate(browserTab, pid: application.pid, raiseWindow: false) { parent.focus(onFronted) }
+            } else {
+                // No parent to focus: the script raised the tab's window within the browser, so activating
+                // the app brings that window forward.
+                FocusIntents.shared.supersede()
+                let runningApplication = application.runningApplication
+                BrowserTabs.activate(browserTab, pid: application.pid, raiseWindow: true) {
+                    runningApplication.activate(options: [])
+                    onFronted()
+                }
+            }
         } else if let altTabWindow = altTabWindow() {
             // Our windows are only ordered out when closed, and stay listed until the phantom verdict lands.
             // Ordering one front would reopen what the user just dismissed.

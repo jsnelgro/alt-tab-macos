@@ -35,12 +35,15 @@ struct BrowserSnapshot: Equatable {
 
 /// What a tab row carries. `parentWid` is looked up in `Windows.byWindowId` when needed, never held strongly.
 struct BrowserTabRef: Equatable {
-    let parentWid: CGWindowID
+    /// nil when `BrowserWindowMatcher` couldn't pair the tab's window: the row is still listed, and switching to
+    /// it goes through the script alone.
+    let parentWid: CGWindowID?
     let scriptWindowId: String
     let dialect: BrowserDialect
     let tab: BrowserTab
-    /// 1-based position in the tab strip, skipping the active tab: the order tab rows follow their window in.
+    /// The order tab rows follow their window in: the 1-based position in the tab strip. Unmatched rows count on
+    /// from `BrowserTabRowsDiff.unmatchedSlotBase`, so they sort after any matched rows.
     let slot: Int
-    /// 1-based position in the tab strip at read time, the active tab included. Safari switches tabs by it.
+    /// 1-based position in the tab strip at read time. Safari switches tabs by it.
     let stripIndex: Int
 }
