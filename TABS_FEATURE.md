@@ -37,12 +37,13 @@ This repository is a personal fork with one user:
 Today a browser window is one row, titled after its **active** tab. Its other tabs are invisible to AltTab, so
 "jump to the GitHub tab" means switching to the browser and then hunting through the tab strip.
 
-Add the browser's **other tabs** to the list as rows of their own. They can be selected, searched, grouped and
+Add the browser's **tabs** to the list as rows of their own. They can be selected, searched, grouped and
 focused like any window:
 
 ```
- ▸ Pull request #12 — GitHub              ← the Helium window (its active tab)
- ▸ Inbox (3) — Gmail                      ← its other tabs, in tab-strip order
+ ▸ Pull request #12 — GitHub              ← the Helium window
+ ▸ Pull request #12 — GitHub              ← its tabs, in tab-strip order (the active one too)
+ ▸ Inbox (3) — Gmail
  ▸ Swift Forums
  ▸ Project Alpha — Xcode
  ▸ Apple Developer Documentation          ← a Brave window
@@ -84,9 +85,11 @@ There are three kinds of "tabs" on macOS. Only one of them needs new work:
 
 1. **Per-shortcut switch.** A new per-shortcut setting, "Browser tabs" (Hide / Show), default Hide. Tabs are
    read only while at least one shortcut shows them.
-2. **The window row is the active tab.** A browser window stays exactly as it is today. It represents its
-   active tab, so focus order, the hidden/minimized/fullscreen filters and focusing all keep working unchanged.
-   Each *other* tab gets one extra row. A window with a single tab adds no rows.
+2. **Every tab gets a row, and the window keeps its own.** A browser window stays exactly as it is today, so
+   focus order, the hidden/minimized/fullscreen filters and focusing all keep working unchanged. Each tab, the
+   active one included, gets one extra row with its own title and site icon. (An earlier version let the window
+   row stand for the active tab, but that row shows the browser's window title, which can be a custom window
+   name, and the browser icon.)
 3. **Flat rows, ordered by their window.** Tab rows are drawn exactly like window rows, with no indentation
    or tree. Matching groups are the only source of structure in the list. A tab row sorts as if it were its
    window, then by tab-strip position, so a window's tabs sit right after it when they're in the same section,
@@ -598,8 +601,10 @@ Only candidates from the **same pid** are passed in. The rules, in order:
    title.
 2. **Frame equal**, if exactly one tracked candidate has that frame.
 3. **Title equal**, if exactly one candidate has that title.
-4. Otherwise unmatched. That script window's tabs aren't shown. Being wrong here would mean switching the wrong
-   window's tab.
+4. Otherwise unmatched. Being wrong here would mean focusing the wrong window. The unmatched window's tabs are
+   still listed, after the browser's least recently used shown window, and switching to one has the script
+   raise its window (`set index of w to 1`) before the browser is activated. The match only decides placement
+   and which window AltTab focuses.
 
 Safari: check during step 1 whether `id of window` equals the `CGWindowID` (it's AppKit's scripting `uniqueID`,
 which is commonly the window number). If it does, match Safari windows by id and skip the heuristic. If not,
@@ -886,7 +891,7 @@ no URL and are identified by `"index|title"`.
   - unchanged → keep all;
   - new tab → insert;
   - closed tab → remove;
-  - the active tab changed → the old active tab now has a row and the new one doesn't;
+  - the active tab changed → every row is kept;
   - a Safari tab moved (index key changed) → remove and insert.
 - **`WindowOrderResolver`:**
   - a tab row sorts right after its parent in slot order, for every sort type;
@@ -928,6 +933,6 @@ no URL and are identified by `"index|title"`.
 Resolved: the browsers are Helium and Brave (daily) and Safari (rare). Incognito and private windows are out of
 scope.
 
-1. Should the active tab also have its own row, with the window row hidden ("replace" instead of "expand")?
-   The design picks "expand", because the window row already *is* the active tab, and hiding real windows
-   affects focus order, filters and the default selection.
+1. Should the window row be hidden now that the active tab has its own row ("replace" instead of "expand")?
+   The design keeps the window row, because hiding real windows affects focus order, filters and the default
+   selection.

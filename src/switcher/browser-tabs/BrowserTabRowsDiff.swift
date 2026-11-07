@@ -12,19 +12,23 @@ enum BrowserTabRowsDiff {
         "btab-\(pid)-\(ref.scriptWindowId)-\(ref.tab.key)"
     }
 
-    /// One row per tab of each matched window, except its active tab: the window's own row already is that
-    /// tab. A window with a single tab adds nothing.
+    static let unmatchedSlotBase = 1_000_000
+
+    /// One row per tab of every window, the active tab included, so each tab shows its own title and site icon;
+    /// the window keeps its own row. An unmatched window's tabs are listed too, with no parent; their slots run
+    /// on across all unmatched windows so each window's tabs stay together.
     static func wantedRefs(_ snapshot: BrowserSnapshot, matches: [String: CGWindowID]) -> [BrowserTabRef] {
-        snapshot.windows.flatMap { w -> [BrowserTabRef] in
-            guard let wid = matches[w.scriptId], w.tabs.count > 1 else { return [] }
-            var slot = 0
-            return w.tabs.enumerated().compactMap { i, tab in
-                guard i + 1 != w.activeTabIndex else { return nil }
-                slot += 1
-                return BrowserTabRef(parentWid: wid, scriptWindowId: w.scriptId, dialect: snapshot.dialect,
-                    tab: tab, slot: slot, stripIndex: i + 1)
+        var refs = [BrowserTabRef]()
+        var unmatchedSlot = unmatchedSlotBase
+        for w in snapshot.windows {
+            let wid = matches[w.scriptId]
+            for (i, tab) in w.tabs.enumerated() {
+                unmatchedSlot += wid == nil ? 1 : 0
+                refs.append(BrowserTabRef(parentWid: wid, scriptWindowId: w.scriptId, dialect: snapshot.dialect,
+                    tab: tab, slot: wid == nil ? unmatchedSlot : i + 1, stripIndex: i + 1))
             }
         }
+        return refs
     }
 
     static func diff(existing: [String], wanted: [String]) -> Result {

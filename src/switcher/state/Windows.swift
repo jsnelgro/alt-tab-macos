@@ -127,15 +127,15 @@ class Windows {
         return true
     }
 
-    /// A tab row skips the filters: it is shown exactly when its window is, and the shortcut lists tabs. One
-    /// window per app means one row per app, so no tab rows then.
+    /// A tab row skips the filters: it is shown exactly when its anchor window (`BrowserTabs.anchor`) is, and the
+    /// shortcut lists tabs. One window per app means one row per app, so no tab rows then.
     private static func updateBrowserTabRowsVisibility() {
         let shortcutIndex = SwitcherSession.current?.shortcutIndex ?? 0
         let tabsShown = Preferences.browserTabs(shortcutIndex) == .show && !Preferences.showsOneWindowPerApp()
         for row in list where row.browserTab != nil {
-            let parent = BrowserTabs.parent(of: row)
-            if let parent { row.mirrorParentDisplayFacts(parent) }
-            row.shouldShowTheUser = tabsShown && (parent?.shouldShowTheUser ?? false)
+            let anchor = BrowserTabs.anchor(of: row)
+            if let anchor { row.mirrorAnchorDisplayFacts(anchor) }
+            row.shouldShowTheUser = tabsShown && (anchor?.shouldShowTheUser ?? false)
         }
     }
 
@@ -585,13 +585,13 @@ class Windows {
             && !MatchingGroups.compiled.isEmpty
     }
 
-    /// A tab row sorts with its parent's facts, so every bucket and sort key puts it where its window is, and
+    /// A tab row sorts with its anchor's facts, so every bucket and sort key puts it where its window is, and
     /// `browserTabSlot` orders the family. Its search score and matching-group facts are its own.
     private static func orderWindow(_ window: Window, _ query: String, _ searchActive: Bool, _ groupingActive: Bool) -> OrderWindow {
         let state = window.state
         let app = window.application.state
         var orderWindow = OrderWindow(
-            state: BrowserTabs.parent(of: window)?.state ?? state,
+            state: BrowserTabs.anchor(of: window)?.state ?? state,
             app: app,
             searchMatches: searchActive ? Search.matches(window, query: query) : false,
             searchRelevance: searchActive ? Search.relevance(for: window, query: query) : 0)
@@ -913,7 +913,7 @@ class Windows {
         removeBrowserTabRows(windowsAndRows.filter { $0.browserTab != nil })
         let windows = windowsAndRows.filter { $0.browserTab == nil }
         let removedWids = Set(windows.compactMap { $0.cgWindowId })
-        removeBrowserTabRows(list.filter { $0.browserTab.map { removedWids.contains($0.parentWid) } ?? false })
+        removeBrowserTabRows(list.filter { $0.browserTab?.parentWid.map { removedWids.contains($0) } ?? false })
         // Release any pooled TileView pinned to a window we're removing so its thumbnail
         // IOSurface can deallocate now. Otherwise the layer.contents reference keeps the
         // IOSurface alive until the next switcher show — which may be much later, and

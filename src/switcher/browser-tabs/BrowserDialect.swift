@@ -27,6 +27,9 @@ extension BrowserDialect {
     /// tab's title or URL is never pasted into source. The bundle id is: it comes from `supported`, not from
     /// any browser, and a literal `tell application id` is what lets the dictionary's terms compile.
     ///
+    /// `raiseWindow` brings the tab's window to the front of the browser's windows, for a row with no parent
+    /// window for AltTab to focus. Both act handlers take it so `BrowserTabsReader.act` passes one argument list.
+    ///
     /// `with timeout` caps each Apple Event: the default wait for a busy browser is about two minutes.
     /// Ids are compared `as text` because both Chromium dictionaries declare them text, but older builds
     /// answered integers.
@@ -67,16 +70,22 @@ extension BrowserDialect {
         error "tab not found"
     end tabIndex
 
-    on activateTab(windowId, tabId, stripIndex, tabURL)
+    on activateTab(windowId, tabId, stripIndex, tabURL, raiseWindow)
         with timeout of 2 seconds
             set w to findWindow(windowId)
             set i to tabIndex(w, tabId)
-            tell application id "BUNDLE_ID" to set active tab index of w to i
+            tell application id "BUNDLE_ID"
+                set active tab index of w to i
+                if raiseWindow then
+                    if minimized of w then set minimized of w to false
+                    set index of w to 1
+                end if
+            end tell
         end timeout
         return true
     end activateTab
 
-    on closeTab(windowId, tabId, stripIndex, tabURL)
+    on closeTab(windowId, tabId, stripIndex, tabURL, raiseWindow)
         with timeout of 2 seconds
             set w to findWindow(windowId)
             set i to tabIndex(w, tabId)
@@ -113,15 +122,18 @@ extension BrowserDialect {
         end tell
     end findTab
 
-    on activateTab(windowId, tabId, stripIndex, tabURL)
+    on activateTab(windowId, tabId, stripIndex, tabURL, raiseWindow)
         with timeout of 2 seconds
             set {w, i} to findTab(windowId, stripIndex, tabURL)
-            tell application id "BUNDLE_ID" to set current tab of w to tab i of w
+            tell application id "BUNDLE_ID"
+                set current tab of w to tab i of w
+                if raiseWindow then set index of w to 1
+            end tell
         end timeout
         return true
     end activateTab
 
-    on closeTab(windowId, tabId, stripIndex, tabURL)
+    on closeTab(windowId, tabId, stripIndex, tabURL, raiseWindow)
         with timeout of 2 seconds
             set {w, i} to findTab(windowId, stripIndex, tabURL)
             tell application id "BUNDLE_ID" to close tab i of w

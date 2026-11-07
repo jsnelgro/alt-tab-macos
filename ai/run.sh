@@ -11,6 +11,8 @@ rm -f "$fifo" && mkfifo "$fifo"
 # `--stdout` needs a real path (/dev/stdout is not connected through), and opening a fifo for writing blocks
 # until a reader shows up — hence the background launch, and `tee` both streaming the log here as the app
 # writes it and leaving it in "$log" to grep afterwards.
-open -n --stdout "$fifo" --stderr "$fifo" -a "$PWD/DerivedData/Build/Products/Debug/AltTab.app" \
+# The newest app built: PRODUCT_NAME can be overridden in config/local.xcconfig (e.g. AltTabDebug).
+app="$(ls -td "$PWD"/DerivedData/Build/Products/Debug/*.app | head -1)"
+open -n --stdout "$fifo" --stderr "$fifo" -a "$app" \
   --args --logs=debug --benchmark showUi 3 &
 tee "$log" < "$fifo"

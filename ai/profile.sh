@@ -1,6 +1,8 @@
 #!/bin/bash
 
 profileFile="/tmp/profile_$(date +%Y%m%d_%H%M%S)"
+# The newest app built: PRODUCT_NAME can be overridden in config/local.xcconfig (e.g. AltTabDebug).
+app="$(ls -td DerivedData/Build/Products/Debug/*.app | head -1)"
 
 xcrun xctrace record \
   --instrument 'Time Profiler' \
@@ -8,7 +10,7 @@ xcrun xctrace record \
   --no-prompt --quiet \
   --output "$profileFile".trace \
   --launch -- \
-    DerivedData/Build/Products/Debug/AltTab.app --benchmark showUi 3
+    "$app" --benchmark showUi 3
 
 xcrun xctrace export \
   --input "$profileFile".trace \
